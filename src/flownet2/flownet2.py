@@ -15,7 +15,7 @@ class FlowNet2(Net):
         self.net_sd = FlowNetSD(mode, debug)
         super(FlowNet2, self).__init__(mode=mode, debug=debug)
 
-    def model(self, inputs, training_schedule, trainable=True):
+    def model(self, inputs, training_schedule, trainable=False):
         _, height, width, _ = inputs['input_a'].shape.as_list()
         with tf.variable_scope('FlowNet2'):
             # Forward pass through FlowNetCSS and FlowNetSD with weights frozen
@@ -102,6 +102,7 @@ class FlowNet2(Net):
                     return {
                         'predict_flow0': predict_flow0,
                         'flow': flow,
+                        'fuse_interconv0':fuse_interconv0,
                     }
 
     def loss(self, flow, predictions):

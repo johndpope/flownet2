@@ -7,6 +7,7 @@ import numpy as np
 from scipy.misc import imread, imsave
 import uuid
 from .training_schedules import LONG_SCHEDULE
+from .utils import pad
 slim = tf.contrib.slim
 
 
@@ -38,10 +39,38 @@ class Net(object):
         """
         return
     def euro(self, inputs):
+        bs=8
         training_schedule = LONG_SCHEDULE
-        predictions = self.model(inputs, training_schedule)
-        pred_flow = predictions['flow']
-        return pred_flow                 
+        predictions = self.model(inputs, training_schedule, trainable=False)
+        fuse_interconv0 = predictions['fuse_interconv0']
+        with slim.arg_scope([slim.fully_connected,slim.conv2d],
+                        activation_fn=None,
+                        # normalizer_fn=slim.batch_norm,
+                        weights_initializer=\
+                        tf.truncated_normal_initializer(stddev=0.01),
+                        weights_regularizer=slim.l2_regularizer(0.0005),trainable=True):
+
+                        conv_l=slim.conv2d(fuse_interconv0,1,3,activation_fn=None, scope='f1')
+                        conv_l=tf.contrib.layers.flatten(conv_l)
+                        # conv_l=tf.reshape(conv_l,[bs,143360])
+                        pred = slim.fully_connected(conv_l, 9,activation_fn=None,scope="f2")
+                        
+                        sin = tf.slice(pred, [0,0], [-1,3])*0.001
+                        cos = tf.slice(pred, [0,3], [-1,3])*0.001
+                        tra = tf.slice(pred, [0,6], [-1,3])
+                        [sina,  sinb, sing] = tf.unstack(sin,axis=1)
+                        [cosa, cosb, cosg] = tf.unstack(cos,axis=1)
+
+                        # normalize
+                        sina, cosa = sincos_norm(sina, cosa)
+                        sinb, cosb = sincos_norm(sinb, cosb)
+                        sing, cosg = sincos_norm(sing, cosg)
+
+                        R = sincos2r(sina,sinb,sing,cosa,cosb,cosg)
+                        T = tra
+
+                        RT = merge_rt(R,T)
+                        return RT                 
 
 
     def test(self, checkpoint, input_a_path, input_b_path, out_path, save_image=True, save_flo=False):
