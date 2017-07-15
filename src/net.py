@@ -37,6 +37,12 @@ class Net(object):
         Returns a single Tensor representing the total loss of the model.
         """
         return
+    def euro(self, inputs):
+        training_schedule = LONG_SCHEDULE
+        predictions = self.model(inputs, training_schedule)
+        pred_flow = predictions['flow']
+        return pred_flow                 
+
 
     def test(self, checkpoint, input_a_path, input_b_path, out_path, save_image=True, save_flo=False):
         input_a = imread(input_a_path)
@@ -65,7 +71,7 @@ class Net(object):
         # Scale output flow relative to input size
         pred_flow = pred_flow * [inputs['input_a'].shape.as_list()[2],
                                  inputs['input_a'].shape.as_list()[1]]
-
+                                 
         saver = tf.train.Saver()
 
         with tf.Session() as sess:
