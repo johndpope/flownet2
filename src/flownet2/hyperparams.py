@@ -1,0 +1,2 @@
+learning_rate=0.00001
+max_iterations=100

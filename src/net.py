@@ -8,6 +8,7 @@ from scipy.misc import imread, imsave
 import uuid
 from .training_schedules import LONG_SCHEDULE
 from .utils import pad
+from .flownet2.extras import sincos_norm,sincos2r, merge_rt
 slim = tf.contrib.slim
 
 
