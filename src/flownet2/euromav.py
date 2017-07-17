@@ -12,21 +12,34 @@ train_txt='./train.txt'
 val_txt='./val.txt'
 checkpoint='./checkpoints/FlowNet2/flownet-2.ckpt-0'
 
-(i_t1,i_t2,p_t1,p_t2)=bat.euromav_batch(train_txt,8)#configs from dataset_configs
-(i_v1,i_v2,p_v1,p_v2)=bat.euromav_batch(val_txt,8)#configs from dataset_configs
+(i_t1,i_t2,p_t1,p_t2)=bat.euromav_batch(train_txt,batch_size)#configs from dataset_configs
+(i_v1,i_v2,p_v1,p_v2)=bat.euromav_batch(val_txt,batch_size)#configs from dataset_configs
 writer_t = tf.summary.FileWriter('./graphs/train', None)
 writer_v = tf.summary.FileWriter('./graphs/validation', None)
-
+writer_t_z = tf.summary.FileWriter('./graphs/zero_train', None)
+writer_v_z = tf.summary.FileWriter('./graphs/zero_validation', None)
 
 rt12_g = ominus(p_t2, p_t1)
+x = tf.placeholder("float", shape=[batch_size, height, width,3])
+y = tf.placeholder("float", shape=[batch_size, height, width,3])
 inputs = {
-            'input_a': i_t1,
-            'input_b': i_t2,
+            'input_a': x,
+            'input_b': y,
         }
+
 RT_e=net.euro(inputs)
-(rtd, rta) = safe_rtLoss(RT_e, rt12_g)
-cost = (rta+rtd)
-optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(cost)
+if (do_zero_motion):
+    RT_e=tf.tile(tf.reshape(tf.Variable([[[1,0,0,0],
+     [0,1,0,0],
+     [0,0,1,0],
+     [0,0,0,1]]], dtype=tf.float32),[1,4,4]),[batch_size,1,1])
+    (rtd,rta) = safe_rtLoss(RT_e,rt12_g)
+    cost = (rta+rtd)
+else:
+    (rtd, rta) = safe_rtLoss(RT_e, rt12_g)
+    cost = (rta+rtd)
+    optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(cost)
+
 with tf.name_scope("RT_loss"):
         odo_loss_sum = tf.summary.scalar("loss", cost)
         rtd_sum = tf.summary.scalar("rtd", rtd)
@@ -41,10 +54,26 @@ with tf.Session() as sess:
     sess.run(init_op)
     coord = tf.train.Coordinator()
     threads = tf.train.start_queue_runners(coord=coord)
-    saver.restore(sess, checkpoint)
+    if not do_zero_motion:
+        saver.restore(sess, checkpoint)
     for i in range(0,max_iterations):
-        # [RT_e_] = sess.run([RT_e])
-        [opt, train_loss, summ] = sess.run([optimizer, cost, summary])
-        print('iteration:',i,' train loss:',train_loss)
-        writer_t.add_summary(summ,i)
-        # print(RT_e_[0])
+        if not do_zero_motion:
+            # train dataset
+            i1_, i2_ = sess.run([i_t1,i_t2])
+            [opt, train_loss, summ1] = sess.run([optimizer, cost, summary],feed_dict={x: i1_, y: i2_})
+            writer_t.add_summary(summ1,i)
+            #validation dataset
+            i1_, i2_ = sess.run([i_v1,i_v2])
+            [val_loss, summ2] = sess.run([cost, summary],feed_dict={x: i1_, y: i2_})
+            print('iteration:',i,' train loss:',train_loss,' validation loss:',val_loss)
+            writer_v.add_summary(summ2,i)
+        else:
+            # train dataset
+            i1_, i2_ = sess.run([i_t1,i_t2])
+            [train_loss, summ1] = sess.run([cost, summary],feed_dict={x: i1_, y: i2_})
+            writer_t_z.add_summary(summ1,i)
+            #validation dataset
+            i1_, i2_ = sess.run([i_v1,i_v2])
+            [val_loss, summ2] = sess.run([cost, summary],feed_dict={x: i1_, y: i2_})
+            print('iteration:',i,' zero train loss:',train_loss,' zero validation loss:',val_loss)
+            writer_v_z.add_summary(summ2,i)
