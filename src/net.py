@@ -8,7 +8,7 @@ from scipy.misc import imread, imsave
 import uuid
 from .training_schedules import LONG_SCHEDULE
 from .utils import pad
-from .flownet2.extras import sincos_norm,sincos2r, merge_rt
+from .flownet2.extras import sincos_norm,sincos2r, merge_rt,pose2mat
 slim = tf.contrib.slim
 
 
@@ -54,23 +54,24 @@ class Net(object):
                         conv_l=slim.conv2d(fuse_interconv0,1,3,activation_fn=None, scope='f1')
                         conv_l=tf.contrib.layers.flatten(conv_l)
                         # conv_l=tf.reshape(conv_l,[bs,143360])
-                        pred = slim.fully_connected(conv_l, 9,activation_fn=None,scope="f2")
+                        pred = slim.fully_connected(conv_l, 7,activation_fn=None,scope="f2")
                         
-                        sin = tf.slice(pred, [0,0], [-1,3])*0.001
-                        cos = tf.slice(pred, [0,3], [-1,3])*0.001
-                        tra = tf.slice(pred, [0,6], [-1,3])
-                        [sina,  sinb, sing] = tf.unstack(sin,axis=1)
-                        [cosa, cosb, cosg] = tf.unstack(cos,axis=1)
+                        # sin = tf.slice(pred, [0,0], [-1,3])*0.001
+                        # cos = tf.slice(pred, [0,3], [-1,3])*0.001
+                        # tra = tf.slice(pred, [0,6], [-1,3])
+                        # [sina,  sinb, sing] = tf.unstack(sin,axis=1)
+                        # [cosa, cosb, cosg] = tf.unstack(cos,axis=1)
 
-                        # normalize
-                        sina, cosa = sincos_norm(sina, cosa)
-                        sinb, cosb = sincos_norm(sinb, cosb)
-                        sing, cosg = sincos_norm(sing, cosg)
+                        # # normalize
+                        # sina, cosa = sincos_norm(sina, cosa)
+                        # sinb, cosb = sincos_norm(sinb, cosb)
+                        # sing, cosg = sincos_norm(sing, cosg)
 
-                        R = sincos2r(sina,sinb,sing,cosa,cosb,cosg)
-                        T = tra
+                        # R = sincos2r(sina,sinb,sing,cosa,cosb,cosg)
+                        # T = tra
 
-                        RT = merge_rt(R,T)
+                        # RT = merge_rt(R,T)
+                        RT= pose2mat(pred)
                         return RT                 
 
 
