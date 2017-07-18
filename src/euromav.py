@@ -13,7 +13,15 @@ if (archi=="Flownet2"):
 	checkpoint='./checkpoints/FlowNet2/flownet-2.ckpt-0'
 elif (archi=="Flownetc"):
 	net=FlowNetC()
-	checkpoint='./checkpoints/FlowNetC/flownet-C.ckpt-0'
+	if not fine_tune:
+		checkpoint='./checkpoints/FlowNetC/flownet-C.ckpt-0'
+		variables_to_restore = slim.get_variables_to_restore(exclude=["f1","f2","beta2_power","beta1_power"]) #these are my last two layers
+		saver = tf.train.Saver(variables_to_restore)
+		print('loaded ',checkpoint)
+	else:
+		saver = tf.train.Saver()
+		checkpoint='./checkpoints/last_layer.ckpt'
+		print('loaded ',checkpoint)
 else:
     raise('didnot choose architecture')
 
@@ -23,8 +31,8 @@ val_txt='./val.txt'
 
 (i_t1,i_t2,p_t1,p_t2)=bat.euromav_batch(train_txt,batch_size)#configs from dataset_configs
 (i_v1,i_v2,p_v1,p_v2)=bat.euromav_batch(val_txt,batch_size)#configs from dataset_configs
-writer_t = tf.summary.FileWriter('./graphs/train_c', None)
-writer_v = tf.summary.FileWriter('./graphs/validation_c', None)
+writer_t = tf.summary.FileWriter('./graphs/train_c_f', None)
+writer_v = tf.summary.FileWriter('./graphs/validation_c_f', None)
 writer_t_z = tf.summary.FileWriter('./graphs/zero_train', None)
 writer_v_z = tf.summary.FileWriter('./graphs/zero_validation', None)
 
@@ -55,9 +63,8 @@ with tf.name_scope("RT_loss"):
 		rta_sum = tf.summary.scalar("rta", rta)
 summary = tf.summary.merge([odo_loss_sum,rtd_sum,rta_sum])
 
-variables_to_restore = slim.get_variables_to_restore(exclude=["f1","f2","beta2_power","beta1_power"]) #these are my last two layers
 init_op = tf.group(tf.global_variables_initializer(), tf.local_variables_initializer())
-saver = tf.train.Saver(variables_to_restore)
+
 
 saver1 = tf.train.Saver()
 

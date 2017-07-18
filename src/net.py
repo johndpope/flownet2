@@ -9,7 +9,7 @@ import uuid
 from .training_schedules import LONG_SCHEDULE
 from .utils import pad
 from .flownet2.extras import sincos_norm,sincos2r, merge_rt,pose2mat
-from hyperparams import archi
+from hyperparams import archi,fine_tune
 slim = tf.contrib.slim
 
 
@@ -43,7 +43,11 @@ class Net(object):
     def euro(self, inputs):
         bs=8
         training_schedule = LONG_SCHEDULE
-        predictions = self.model(inputs, training_schedule, trainable=False)
+        if not fine_tune:
+            predictions = self.model(inputs, training_schedule, trainable=False)
+        else:
+            predictions = self.model(inputs, training_schedule, trainable=True)
+
         if(archi=="Flownetc"):
             fuse_interconv0 = predictions['predict_flow2']
         elif(archi=="Flownet2"):
