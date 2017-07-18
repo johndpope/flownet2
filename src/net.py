@@ -9,6 +9,7 @@ import uuid
 from .training_schedules import LONG_SCHEDULE
 from .utils import pad
 from .flownet2.extras import sincos_norm,sincos2r, merge_rt,pose2mat
+from hyperparams import archi
 slim = tf.contrib.slim
 
 
@@ -43,7 +44,12 @@ class Net(object):
         bs=8
         training_schedule = LONG_SCHEDULE
         predictions = self.model(inputs, training_schedule, trainable=False)
-        fuse_interconv0 = predictions['fuse_interconv0']
+        if(archi=="Flownetc"):
+            fuse_interconv0 = predictions['predict_flow2']
+        elif(archi=="Flownet2"):
+            fuse_interconv0 = predictions['fuse_interconv0']
+        else:
+            raise('didnot choose architecture')
         with slim.arg_scope([slim.fully_connected,slim.conv2d],
                         activation_fn=None,
                         # normalizer_fn=slim.batch_norm,
