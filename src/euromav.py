@@ -10,33 +10,26 @@ slim = tf.contrib.slim
 # Create a new network
 if (archi=="Flownet2"):
 	net = FlowNet2()
-	checkpoint='./checkpoints/FlowNet2/flownet-2.ckpt-0'
 elif (archi=="Flownetc"):
 	net=FlowNetC()
-	if not fine_tune:
-		checkpoint='./checkpoints/FlowNetC/flownet-C.ckpt-0'
-		variables_to_restore = slim.get_variables_to_restore(exclude=["f1","f2","beta2_power","beta1_power"]) #these are my last two layers
-		saver = tf.train.Saver(variables_to_restore)
-		print('loaded ',checkpoint)
-	else:
-		saver = tf.train.Saver()
-		checkpoint='./checkpoints/last_layer.ckpt'
-		print('loaded ',checkpoint)
 else:
-    raise('didnot choose architecture')
+	raise("didnot choose architecture")
 
+variables_to_restore = slim.get_variables_to_restore(exclude=variables_to_exclude) #these are my last two layers
+saver = tf.train.Saver(variables_to_restore)
+print('loading from checkpoint: ',checkpoint)
+
+writer_t = tf.summary.FileWriter(train_log_dir, None)
+writer_v = tf.summary.FileWriter(validation_log_dir, None)
 
 train_txt='./train.txt'
 val_txt='./val.txt'
 
 (i_t1,i_t2,p_t1,p_t2)=bat.euromav_batch(train_txt,batch_size)#configs from dataset_configs
 (i_v1,i_v2,p_v1,p_v2)=bat.euromav_batch(val_txt,batch_size)#configs from dataset_configs
-writer_t = tf.summary.FileWriter('./graphs/train_c_f', None)
-writer_v = tf.summary.FileWriter('./graphs/validation_c_f', None)
-writer_t_z = tf.summary.FileWriter('./graphs/zero_train', None)
-writer_v_z = tf.summary.FileWriter('./graphs/zero_validation', None)
 
 rt12_g = ominus(p_t2, p_t1)
+
 x = tf.placeholder("float", shape=[batch_size, height, width,3])
 y = tf.placeholder("float", shape=[batch_size, height, width,3])
 inputs = {
@@ -89,12 +82,12 @@ with tf.Session() as sess:
 			# train dataset
 			i1_, i2_ = sess.run([i_t1,i_t2])
 			[train_loss, summ1] = sess.run([cost, summary],feed_dict={x: i1_, y: i2_})
-			writer_t_z.add_summary(summ1,i)
+			writer_t.add_summary(summ1,i)
 			#validation dataset
 			i1_, i2_ = sess.run([i_v1,i_v2])
 			[val_loss, summ2] = sess.run([cost, summary],feed_dict={x: i1_, y: i2_})
 			print('iteration:',i,' zero train loss:',train_loss,' zero validation loss:',val_loss)
-			writer_v_z.add_summary(summ2,i)
+			writer_v.add_summary(summ2,i)
 	print('optimization finished')
-	save_path = saver1.save(sess, "./checkpoints/last_layer.ckpt")
+	save_path = saver1.save(sess, save_dir)
 	print("Model saved in file: %s" % save_path)
