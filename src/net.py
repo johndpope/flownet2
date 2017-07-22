@@ -9,7 +9,7 @@ import uuid
 from .training_schedules import LONG_SCHEDULE
 from .utils import pad
 from .extras import sincos_norm,sincos2r, merge_rt,pose2mat
-from hyperparams import archi,fine_tune, quater, do_avgpooling
+from hyperparams import batch_size,archi,fine_tune, quater, do_avgpooling,pretrained_flow
 slim = tf.contrib.slim
 
 
@@ -41,9 +41,9 @@ class Net(object):
         """
         return
     def euro(self, inputs):
-        bs=8
+        bs=batch_size
         training_schedule = LONG_SCHEDULE
-        if not fine_tune:
+        if (not fine_tune) and (pretrained_flow):
             predictions = self.model(inputs, training_schedule, trainable=False)
         else:
             predictions = self.model(inputs, training_schedule, trainable=True)
@@ -66,8 +66,8 @@ class Net(object):
                                 conv_l=tf.contrib.layers.flatten(conv_l)
                                 pred = slim.fully_connected(conv_l, 9,activation_fn=None,scope="f2")
                             else:
-                                conv_l=slim.conv2d(fuse_interconv0,1,9,activation_fn=None, scope='f1')
-                                pred = slim.avg_pool2d(conv_l,[320,448],stride=2,padding='VALID',scope="f2")
+                                conv_l=slim.conv2d(fuse_interconv0,9,3,activation_fn=None, scope='f1')
+                                pred = slim.avg_pool2d(conv_l,[80,112],stride=2,padding='VALID',scope="f2")
                                 pred=tf.reshape(pred,[bs,9])
 
                             sin = tf.slice(pred, [0,0], [-1,3])*0.001
@@ -91,14 +91,24 @@ class Net(object):
                                 conv_l=tf.contrib.layers.flatten(conv_l)
                                 pred = slim.fully_connected(conv_l, 7,activation_fn=None,scope="f2")
                             else:
-                                conv_l=slim.conv2d(fuse_interconv0,1,9,activation_fn=None, scope='f1')
-                                pred = slim.avg_pool2d(conv_l,[320,448],stride=2,padding='VALID',scope="f2")
-                                pred=tf.reshape(pred,[bs,9])
+                                conv_l=slim.conv2d(fuse_interconv0,7,3,activation_fn=None, scope='f1')
+                                pred = slim.avg_pool2d(conv_l,[80,112],stride=2,padding='VALID',scope="f2")
+                                pred=tf.reshape(pred,[bs,7])
                                 
                             RT= pose2mat(pred)
     
                         return RT                 
 
+    def flowtest(self,inputs):
+         # TODO: This is a hack, we should get rid of this
+        training_schedule = LONG_SCHEDULE
+        predictions = self.model(inputs, training_schedule)
+        pred_flow = predictions['flow']
+
+        # Scale output flow relative to input size
+        pred_flow = pred_flow * [inputs['input_a'].shape.as_list()[2],
+                                 inputs['input_a'].shape.as_list()[1]]
+        return pred_flow
 
     def test(self, checkpoint, input_a_path, input_b_path, out_path, save_image=True, save_flo=False):
         input_a = imread(input_a_path)

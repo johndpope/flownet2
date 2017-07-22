@@ -12,6 +12,16 @@ from sklearn.manifold import TSNE
 
 EPS = 1e-6
 
+#cool stuff
+import sys
+import time
+def spinning_cursor():
+    while True:
+        for cursor in '|/-\\':
+            yield cursor
+
+spinner = spinning_cursor()
+
 #ref: https://en.wikipedia.org/wiki/Conversion_between_quaternions_and_Euler_angles
 def quat_to_euler(q):#tf array [qw,qx,qy,qz] as the data is in this format
     shape = q.get_shape()
