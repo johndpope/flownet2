@@ -1,0 +1,131 @@
+<html>
+  <head>
+    <style>
+      body {
+      background-color: #000;
+      margin:0;
+      font-family: Arial, Helvetica, sans-serif;
+      }
+      h1 {
+      color: green;
+      margin-left: 40px;
+      }
+      w1 {
+      color: white;
+      margin-left: 20px;
+      }
+      table{
+      border-collapse:collapse;
+      margin:0;
+      padding:0;
+      width:100%;
+      }
+      td {
+      margin:0;
+      padding:0;
+      }
+      .label {
+      position:absolute;
+      background-color: #000;
+      color: #ff9;
+      font-size:18;
+      }
+      .top {
+      z-index:0;
+      color: #ff9;
+      font-size:18;
+      }
+      img {
+      width:100%; # 99%;
+      padding:0% # 0.5%
+      }
+    </style>
+  </head>
+  <body>
+
+    <table style="width:100%">
+    <h1>Flownet2</h1>
+    <tr>
+      <th><w1>Dataset</w1></th>
+      <th><w1>I1_g:</w1></th>
+      <th><w1>I2_g:</w1></th> 
+      <th><w1>I2_warped:</w1></th>
+      <th><w1>I1_g to I2_g:</w1></th>
+      <th><w1>I1_g to I2_warped:</w1></th>
+      <th><w1>flow output:</w1></th>
+    </tr>
+    <tr>
+    <th><w1>Euromav:</w1></th>
+    <th><img src="./i1_g_00000001.png" style="width:304px;height:228px;"></th>
+    <th>
+      <img src="./i2_g_00000001.png" style="width:304px;height:228px;">
+    </th> 
+    <th>
+      <img src="./i2w_00000001.png" style="width:304px;height:228px;">
+    </th> 
+    <th> 
+      <img src="./i1i2_00000001.gif" style="width:304px;height:228px;">
+    </th> 
+    <th>  
+      <img src="./i1i2w_00000001.gif" style="width:304px;height:228px;">
+    </th>
+    <th>
+      <img src="./flow_00000001.png" style="width:304px;height:228px;"><br>
+    </th>
+    </tr>
+    <tr>
+    <th><w1>Chair:</w1></th>
+    <th><img src="./i1_g_00000002.png" style="width:304px;height:228px;"></th>
+    <th>
+      <img src="./i2_g_00000002.png" style="width:304px;height:228px;">
+    </th> 
+    <th>
+      <img src="./i2w_00000002.png" style="width:304px;height:228px;">
+    </th> 
+    <th> 
+      <img src="./i1i2_00000002.gif" style="width:304px;height:228px;">
+    </th> 
+    <th>  
+      <img src="./i1i2w_00000002.gif" style="width:304px;height:228px;">
+    </th>
+    <th>
+      <img src="./flow_00000002.png" style="width:304px;height:228px;"><br>
+    </th>
+    </tr>
+    </table>
+    <table>
+    <tr>
+      <th><w1>Stereo flow</w1></th>
+      <th><w1>Depth:</w1></th>
+      <th><w1>I_left:</w1></th>
+      <th><w1>I_right:</w1></th> 
+      <th><w1>I_right_warped:</w1></th>
+      <th><w1>I_left to I_right:</w1></th>
+      <th><w1>I_left to I_right_warped:</w1></th>
+      <th><w1>flow output:</w1></th>
+    </tr>
+    <tr>
+    <th><w1>Left to right:</w1></th>
+    <th>
+      <img src="./depth_00000003.png" style="width:304px;height:228px;"><br>
+    </th>
+    <th><img src="./i1_g_00000003.png" style="width:304px;height:228px;"></th>
+    <th>
+      <img src="./i2_g_00000003.png" style="width:304px;height:228px;">
+    </th> 
+    <th>
+      <img src="./i2w_00000003.png" style="width:304px;height:228px;">
+    </th> 
+    <th> 
+      <img src="./i1i2_00000003.gif" style="width:304px;height:228px;">
+    </th> 
+    <th>  
+      <img src="./i1i2w_00000003.gif" style="width:304px;height:228px;">
+    </th>
+    <th>
+      <img src="./flow_00000003.png" style="width:304px;height:228px;"><br>
+    </th>
+    </tr>
+    </table>
+  </body>
+</html>

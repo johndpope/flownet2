@@ -17,14 +17,21 @@ def euromav_batch(dataset,bs,shuffle=True,dotrim=False):
 
     queue = tf.train.string_input_producer(records, shuffle=shuffle)
 
-    (h,w,i1,i2,p1,p2) = read_and_decode_euromav(queue)
+    (h,w,i1_l,i2_l,i1_r,i2_r,p1,p2) = read_and_decode_euromav(queue)
 
-    i1 = tf.cast(i1,tf.float32) * 1./255 - 0.5
-    i2 = tf.cast(i2,tf.float32) * 1./255 - 0.5
-    i1 = tf.image.resize_images(i1, [320, 448])
-    i2 = tf.image.resize_images(i2, [320, 448])
-    i1 =tf.tile(i1,[1,1,3])
-    i2 =tf.tile(i2,[1,1,3])
+    i1_l = tf.cast(i1_l,tf.float32) * 1./255 - 0.5
+    i2_l = tf.cast(i2_l,tf.float32) * 1./255 - 0.5
+    i1_l = tf.image.resize_images(i1_l, [320, 448])
+    i2_l = tf.image.resize_images(i2_l, [320, 448])
+    i1_l =tf.tile(i1_l,[1,1,3])
+    i2_l =tf.tile(i2_l,[1,1,3])
+
+    i1_r = tf.cast(i1_r,tf.float32) * 1./255 - 0.5
+    i2_r = tf.cast(i2_r,tf.float32) * 1./255 - 0.5
+    i1_r = tf.image.resize_images(i1_r, [320, 448])
+    i2_r = tf.image.resize_images(i2_r, [320, 448])
+    i1_r =tf.tile(i1_r,[1,1,3])
+    i2_r =tf.tile(i2_r,[1,1,3])
 
     # d1 = d1*v1 # put 0 depth at invalid spots
     # d2 = d2*v2
@@ -42,7 +49,8 @@ def euromav_batch(dataset,bs,shuffle=True,dotrim=False):
     # i1 = tf.slice(allCat, [0,0,0], [-1,-1,1], name="i1")
     # i2 = tf.slice(allCat, [0,0,1], [-1,-1,1], name="i2")
     
-    batch = tf.train.batch([i1,i2,
+    batch = tf.train.batch([i1_l,i2_l,
+                            i1_r,i2_r,
                             p1,p2],
                            batch_size=bs,
                            dynamic_pad=True)

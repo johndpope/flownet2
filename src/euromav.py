@@ -69,7 +69,10 @@ with tf.Session() as sess:
 	coord = tf.train.Coordinator()
 	threads = tf.train.start_queue_runners(coord=coord)
 	if (not do_zero_motion) and (pretrained_flow):
-		saver.restore(sess, checkpoint)
+		if Mode=='test':
+			saver1.restore(sess, checkpoint)
+		else:
+			saver.restore(sess, checkpoint)
 	for i in range(0,max_iterations):
 		if (Mode=='train'):
 			# train dataset
@@ -84,6 +87,10 @@ with tf.Session() as sess:
 			sys.stdout.write('  iteration:%d train loss:%f validation loss:%f'%(i,train_loss,val_loss))
 			sys.stdout.flush()
 			writer_v.add_summary(summ2,i)
+			if (i%10000 ==0):
+				save_path = saver1.save(sess, save_dir)
+				print("Model saved in file: %s at step %d" % (save_path,i))
+
 		elif do_zero_motion:
 			# train dataset
 			i1_, i2_ = sess.run([i_t1,i_t2])
@@ -99,15 +106,13 @@ with tf.Session() as sess:
 			writer_v.add_summary(summ2,i)
 		else:
 			i1_, i2_ = sess.run([i_v1,i_v2])
-			[test_loss, summ1] = sess.run([cost, summary],feed_dict={x: i1_, y: i2_})
+			[test_loss, summ1,rta_,rtd_] = sess.run([cost, summary,rta,rtd],feed_dict={x: i1_, y: i2_})
 			writer_test.add_summary(summ1,i)
 			sys.stdout.write("\r")
 			sys.stdout.write(spinner.next())
-			sys.stdout.write('  iteration:%d test loss:%f'%(i,test_loss))
+			sys.stdout.write('  iteration:%d test loss:%f, rta loss:%f,rtd loss:%f'%(i,test_loss,rta_,rtd_))
 			sys.stdout.flush()
-		if (i%10000 ==0):
-			save_path = saver1.save(sess, save_dir)
-			print("Model saved in file: %s at step %d" % (save_path,i))
-			print "Dumping few visuals" 
-            dump2disk(vis_dir, i, i1_,i2_)
+			if (i%10000 ==0):
+				print "Dumping few visuals" 
+				dump2disk(vis_dir, 1, i1_,i2_)
 	print('optimization finished')

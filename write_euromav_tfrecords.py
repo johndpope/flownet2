@@ -5,8 +5,8 @@ import sys
 from transforms3d.quaternions import *
 import csv
 import cv2
-outDir="../records"
-inDir="../datasets/euromav"
+outDir="./records"
+inDir="./datasets/euromav"
 count=0
 if not os.path.exists(outDir):
 	os.makedirs(outDir)
@@ -23,7 +23,7 @@ def _int64_feature(value):
 def _int64s_feature(value):
   return tf.train.Feature(int64_list=tf.train.Int64List(value=value))
 
-def recorder(prev_image_l,curr_image_l,height, width, p1,p2):
+def recorder(prev_image_l,curr_image_l,prev_image_r,curr_image_r,height, width, p1,p2):
 	global count
 	count +=1
 	sys.stdout.write("\r processed %d sample" %count)
@@ -33,6 +33,8 @@ def recorder(prev_image_l,curr_image_l,height, width, p1,p2):
 	writer = tf.python_io.TFRecordWriter(recordFile, options=compress)
 	prev_img_l = prev_image_l.tostring()
 	curr_img_l = curr_image_l.tostring()
+	prev_img_r = prev_image_r.tostring()
+	curr_img_r = curr_image_r.tostring()
 	p1_raw = p1.flatten().tolist()
 	p2_raw = p2.flatten().tolist()
 	example = tf.train.Example(features=tf.train.Features(feature={
@@ -40,6 +42,8 @@ def recorder(prev_image_l,curr_image_l,height, width, p1,p2):
 	  'width': _int64_feature(width),
 	  'prev_img_l': _bytes_feature(prev_img_l),
   	  'curr_img_l': _bytes_feature(curr_img_l),
+  	  'prev_img_r': _bytes_feature(prev_img_r),
+  	  'curr_img_r': _bytes_feature(curr_img_r),
 	  'p1_raw': _floats_feature(p1_raw),
 	  'p2_raw': _floats_feature(p2_raw),	
 	  }))
@@ -99,8 +103,10 @@ def write_tfrecords():
 		vicon_file=inDir+'/v'+str(j)+'/mav0/vicon0/data.csv'
 		(vicon_time,vicon_data)=read_sensor(vicon_file)
 		t_p=0# previous time
-		# print(imu_data[0:3,None])
-		img_path=inDir+'/v'+str(j)+'/mav0/cam0/data/';
+
+		img_path_l=inDir+'/v'+str(j)+'/mav0/cam0/data/'
+		img_path_r=inDir+'/v'+str(j)+'/mav0/cam1/data/'
+
 		for i in range(1, len(cam_time)-stride):
 			# print(np.argmin(abs(vicon_time-imu_time[i,0])), np.min(abs(vicon_time-imu_time[i,0])))
 			if (t_p==np.argmin(abs(vicon_time-cam_time[i,0]))):
@@ -109,8 +115,12 @@ def write_tfrecords():
 				t_p=np.argmin(abs(vicon_time-cam_time[i,0]))
 				# sys.stdout.write("%d\n"%np.min(abs(vicon_time-cam_time[i,0])))
 				prev_pose=vicon_data[np.argmin(abs(vicon_time-cam_time[i,0])),None]
-				prev_image_l=np.array(cv2.imread(img_path+cam_data[i,0], cv2.IMREAD_ANYCOLOR | cv2.IMREAD_ANYDEPTH))
-				curr_image_l=np.array(cv2.imread(img_path+cam_data[i+stride,0], cv2.IMREAD_ANYCOLOR | cv2.IMREAD_ANYDEPTH))
+				prev_image_l=np.array(cv2.imread(img_path_l+cam_data[i,0], cv2.IMREAD_ANYCOLOR | cv2.IMREAD_ANYDEPTH))
+				curr_image_l=np.array(cv2.imread(img_path_l+cam_data[i+stride,0], cv2.IMREAD_ANYCOLOR | cv2.IMREAD_ANYDEPTH))
+
+				prev_image_r=np.array(cv2.imread(img_path_r+cam_data[i,0], cv2.IMREAD_ANYCOLOR | cv2.IMREAD_ANYDEPTH))
+				curr_image_r=np.array(cv2.imread(img_path_r+cam_data[i+stride,0], cv2.IMREAD_ANYCOLOR | cv2.IMREAD_ANYDEPTH))
+				
 				curr_pose=vicon_data[np.argmin(abs(vicon_time-cam_time[i+stride,0])),None]
 				height=prev_image_l.shape[0]
 				width=prev_image_l.shape[1]
@@ -126,7 +136,7 @@ def write_tfrecords():
 				T2=np.vstack((T2,np.array([0,0,0,1])))
 				T_rel=np.matmul(np.linalg.inv(T2),T1)
 				rel_pose=np.hstack((np.transpose(T_rel[0:3,3]),mat2quat(T_rel[0:3,0:3])))
-				recorder(prev_image_l,curr_image_l,height, width, T1, T2)	
+				recorder(prev_image_l,curr_image_l,prev_image_r,curr_image_r,height, width, T1, T2)	
 	print('tf records created in records folder..')
 if __name__ == '__main__':
 	write_tfrecords()

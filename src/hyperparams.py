@@ -1,4 +1,6 @@
 import sys
+import tensorflow as tf
+import numpy as np
 #core parameters
 max_iterations=100000
 batch_size=8
@@ -8,18 +10,42 @@ width=448
 #control parameters
 do_zero_motion=False
 
-pretrained_flow=False
+pretrained_flow=True
 
 archi='Flownetc'
 quater=True
 fine_tune=False
 do_avgpooling=False
 if not do_zero_motion:
-	Mode='train'
+	Mode='test'
 
 #read tf records txt files
 train_txt='./train.txt'
 val_txt='./val.txt'
+
+#camera extrinsics
+resolution=[752, 480]
+camera_model='pinhole'
+distortion_model='radial-tangential'
+#camera 0 wrt body_frame
+b_c_1=np.array([[0.0148655429818, -0.999880929698, 0.00414029679422, -0.0216401454975],
+	   [0.999557249008, 0.0149672133247, 0.025715529948, -0.064676986768],
+       [-0.0257744366974, 0.00375618835797, 0.999660727178, 0.00981073058949],
+       [0.0, 0.0, 0.0, 1.0]],dtype=np.float32)
+intrinsics_1= [458.654, 457.296, 367.215, 248.375] #fu, fv, cu, cv
+distortion_coefficients_1= [-0.28340811, 0.07395907, 0.00019359, 1.76187114e-05]
+#camera 1 wrt body_frame
+b_c_2=np.array([[0.0125552670891, -0.999755099723, 0.0182237714554, -0.0198435579556],
+       [0.999598781151, 0.0130119051815, 0.0251588363115, 0.0453689425024],
+       [-0.0253898008918, 0.0179005838253, 0.999517347078, 0.00786212447038],
+       [0.0, 0.0, 0.0, 1.0]],dtype=np.float32)
+intrinsics_2=[457.587, 456.134, 379.999, 255.238] #fu, fv, cu, cv
+c2_1= np.linalg.inv(b_c_2)*b_c_1
+rotation=tf.constant(c2_1[0:3,0:3], dtype=tf.float32)
+translation=tf.constant(c2_1[0:3,3], dtype=tf.float32)
+distortion_coefficients_2= [-0.28368365,  0.07451284, -0.00010473, -3.55590700e-05]
+
+
 
 #log directories
 log_dir='./graphs/'
@@ -67,15 +93,15 @@ def details():
 	sys.stdout.write('\n    %s     \n'%('with avg pooling last layer' if do_avgpooling else 'with fully connected last layer'))
 	sys.stdout.write('-'*30)
 	sys.stdout.write('\n    %s     \n'%('with quaternion as output' if quater else 'sincos terms as output'))
-	sys.stdout.write('-'*30)
-	sys.stdout.write('\nwill save checkpoint to directory:    %s     \n'%(save_dir))
-	if not do_zero_motion:
+	if Mode=='train':
+		sys.stdout.write('-'*30)
+		sys.stdout.write('\nwill save checkpoint to directory:    %s     \n'%(save_dir))
 		sys.stdout.write('-'*30)
 		sys.stdout.write('\nlearning rate:    %f     \n'%(learning_rate))		
-	sys.stdout.write('-'*30)
+		sys.stdout.write('-'*30)
+		sys.stdout.write('\nBatch size:   %d   Maximum Iterations   %d    \n'%(batch_size, max_iterations))		
+		sys.stdout.write('-'*30)
 	sys.stdout.write('\nImage Height:   %d   Image Width   %d    \n'%(height, width))	
-	sys.stdout.write('-'*30)
-	sys.stdout.write('\nBatch size:   %d   Maximum Iterations   %d    \n'%(batch_size, max_iterations))		
 	sys.stdout.write('-'*30)
 	sys.stdout.write('\n')
 	sys.stdout.flush() 

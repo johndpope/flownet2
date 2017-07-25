@@ -9,7 +9,7 @@ from math import pi
 from skimage.draw import *
 from sklearn.decomposition import PCA
 from sklearn.manifold import TSNE
-
+from flow_transformer import *
 EPS = 1e-6
 
 #cool stuff

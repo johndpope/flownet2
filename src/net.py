@@ -8,8 +8,9 @@ from scipy.misc import imread, imsave
 import uuid
 from .training_schedules import LONG_SCHEDULE
 from .utils import pad
-from .extras import sincos_norm,sincos2r, merge_rt,pose2mat
-from hyperparams import batch_size,archi,fine_tune, quater, do_avgpooling,pretrained_flow
+from .extras import sincos_norm,sincos2r,warper, merge_rt,pose2mat
+from hyperparams import batch_size,archi,fine_tune, quater, do_avgpooling,pretrained_flow, Mode
+from dump2disk import *
 slim = tf.contrib.slim
 
 
@@ -43,7 +44,7 @@ class Net(object):
     def euro(self, inputs):
         bs=batch_size
         training_schedule = LONG_SCHEDULE
-        if (not fine_tune) and (pretrained_flow):
+        if Mode=='test'or ((not fine_tune) and (pretrained_flow)):
             predictions = self.model(inputs, training_schedule, trainable=False)
         else:
             predictions = self.model(inputs, training_schedule, trainable=True)
@@ -106,19 +107,19 @@ class Net(object):
         pred_flow = predictions['flow']
 
         # Scale output flow relative to input size
-        pred_flow = pred_flow * [inputs['input_a'].shape.as_list()[2],
-                                 inputs['input_a'].shape.as_list()[1]]
+        # pred_flow = pred_flow * [inputs['input_a'].shape.as_list()[2],
+                                 # inputs['input_a'].shape.as_list()[1]]
         return pred_flow
 
     def test(self, checkpoint, input_a_path, input_b_path, out_path, save_image=True, save_flo=False):
         input_a = imread(input_a_path)
         input_b = imread(input_b_path)
 
-        # Convert from RGB -> BGR
+        # # Convert from RGB -> BGR
         input_a = input_a[..., [2, 1, 0]]
         input_b = input_b[..., [2, 1, 0]]
 
-        # Scale from [0, 255] -> [0.0, 1.0] if needed
+        # # Scale from [0, 255] -> [0.0, 1.0] if needed
         if input_a.max() > 1.0:
             input_a = input_a / 255.0
         if input_b.max() > 1.0:
@@ -133,26 +134,27 @@ class Net(object):
         }
         predictions = self.model(inputs, training_schedule)
         pred_flow = predictions['flow']
-
-        # Scale output flow relative to input size
-        pred_flow = pred_flow * [inputs['input_a'].shape.as_list()[2],
-                                 inputs['input_a'].shape.as_list()[1]]
-                                 
         saver = tf.train.Saver()
-
+        (i2_warped,occ)=warper(inputs['input_a'], pred_flow)
         with tf.Session() as sess:
             saver.restore(sess, checkpoint)
-            pred_flow = sess.run(pred_flow)[0, :, :, :]
+            [pred_flow_,i2_warped_] = sess.run([pred_flow,i2_warped])
+            pred_flow_=pred_flow_[0, :, :, :]
+        input_a=np.expand_dims(input_a, axis=0)
+        input_b=np.expand_dims(input_b, axis=0)
+        dump2disk(out_path, 2, input_a,input_b,i2_warped_)
+        flow_img = flow_to_image(pred_flow_)
+        full_out_path = os.path.join(out_path, "flow_"+'{:08}'.format(2)  + '.png')
+        imsave(full_out_path, flow_img)
+            # unique_name = 'flow-' + str(uuid.uuid4())
+            # if save_image:
+            #     flow_img = flow_to_image(pred_flow)
+            #     full_out_path = os.path.join(out_path, unique_name + '.png')
+            #     imsave(full_out_path, flow_img)
 
-            unique_name = 'flow-' + str(uuid.uuid4())
-            if save_image:
-                flow_img = flow_to_image(pred_flow)
-                full_out_path = os.path.join(out_path, unique_name + '.png')
-                imsave(full_out_path, flow_img)
-
-            if save_flo:
-                full_out_path = os.path.join(out_path, unique_name + '.flo')
-                write_flow(pred_flow, full_out_path)
+            # if save_flo:
+            #     full_out_path = os.path.join(out_path, unique_name + '.flo')
+            #     write_flow(pred_flow, full_out_path)
 
     def train(self, log_dir, training_schedule, input_a, input_b, flow, checkpoints=None):
         tf.summary.image("image_a", input_a, max_outputs=2)
