@@ -18,7 +18,7 @@ from skimage.draw import *
 GIFDURATION = 0.2
 
 
-def dump2disk(vis_dir, step, i1_g,i2_g,i2_warped, depth):
+def dump2disk(vis_dir, step, i1_g,i2_g,i2_warped, depth,blended_image):
     try:
         os.mkdir(vis_dir)
     except:
@@ -40,8 +40,9 @@ def dump2disk(vis_dir, step, i1_g,i2_g,i2_warped, depth):
 
     def savegif(name, img1, img2):
         # imgs = [img1[0,:,:,:],img2[0,:,:,:]]
-        print(np.max((img1[0,:,:,:])))
-        imgs = [np.multiply(img1[0,:,:,0],255.0),np.multiply(img2[0,:,:,0],255.0)]
+        img1=(img1)*255.0/np.max(img1)
+        img2=(img2)*255.0/np.max(img2)
+        imgs = [img1[0,:,:,0],img2[0,:,:,0]]
         imageio.mimsave(getfilegif(name), imgs, 'GIF', duration=GIFDURATION)
         
     def savegif3(name, img1, img2, img3):
@@ -63,5 +64,6 @@ def dump2disk(vis_dir, step, i1_g,i2_g,i2_warped, depth):
     saveim('i2_g', i2_g)
     saveim('i2w', i2_warped)
     savegif('i1i2', i1_g, i2_g)
-    savegif('i1i2w',i1_g, i2_warped)
+    savegif('i1i2w',i2_g, i2_warped)
     saveim('depth', depth)
+    saveim('b', blended_image)

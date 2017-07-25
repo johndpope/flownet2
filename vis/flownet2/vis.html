@@ -10,8 +10,16 @@
       color: green;
       margin-left: 40px;
       }
+      h2 {
+      color: blue;
+      margin-left: 40px;
+      }
       w1 {
       color: white;
+      margin-left: 20px;
+      }
+      r1 {
+      color: red;
       margin-left: 20px;
       }
       table{
@@ -43,66 +51,15 @@
   </head>
   <body>
 
-    <table style="width:100%">
+    <table>
     <h1>Flownet2</h1>
     <tr>
-      <th><w1>Dataset</w1></th>
-      <th><w1>I1_g:</w1></th>
-      <th><w1>I2_g:</w1></th> 
-      <th><w1>I2_warped:</w1></th>
-      <th><w1>I1_g to I2_g:</w1></th>
-      <th><w1>I1_g to I2_warped:</w1></th>
-      <th><w1>flow output:</w1></th>
-    </tr>
-    <tr>
-    <th><w1>Euromav:</w1></th>
-    <th><img src="./i1_g_00000001.png" style="width:304px;height:228px;"></th>
-    <th>
-      <img src="./i2_g_00000001.png" style="width:304px;height:228px;">
-    </th> 
-    <th>
-      <img src="./i2w_00000001.png" style="width:304px;height:228px;">
-    </th> 
-    <th> 
-      <img src="./i1i2_00000001.gif" style="width:304px;height:228px;">
-    </th> 
-    <th>  
-      <img src="./i1i2w_00000001.gif" style="width:304px;height:228px;">
-    </th>
-    <th>
-      <img src="./flow_00000001.png" style="width:304px;height:228px;"><br>
-    </th>
-    </tr>
-    <tr>
-    <th><w1>Chair:</w1></th>
-    <th><img src="./i1_g_00000002.png" style="width:304px;height:228px;"></th>
-    <th>
-      <img src="./i2_g_00000002.png" style="width:304px;height:228px;">
-    </th> 
-    <th>
-      <img src="./i2w_00000002.png" style="width:304px;height:228px;">
-    </th> 
-    <th> 
-      <img src="./i1i2_00000002.gif" style="width:304px;height:228px;">
-    </th> 
-    <th>  
-      <img src="./i1i2w_00000002.gif" style="width:304px;height:228px;">
-    </th>
-    <th>
-      <img src="./flow_00000002.png" style="width:304px;height:228px;"><br>
-    </th>
-    </tr>
-    </table>
-    <table>
-    <tr>
-      <th><w1>Stereo flow</w1></th>
+      <th><h2>Euromac</h2></th>
       <th><w1>Depth:</w1></th>
       <th><w1>I_left:</w1></th>
       <th><w1>I_right:</w1></th> 
       <th><w1>I_right_warped:</w1></th>
       <th><w1>I_left to I_right:</w1></th>
-      <th><w1>I_left to I_right_warped:</w1></th>
-      <th><w1>flow output:</w1></th>
     </tr>
     <tr>
     <th><w1>Left to right:</w1></th>
@@ -119,11 +76,71 @@
     <th> 
       <img src="./i1i2_00000003.gif" style="width:304px;height:228px;">
     </th> 
+    </tr>
+    <tr>
+      <th><w1>I_right to I_right_warped:</w1></th>
+      <th><w1>blended_image:</w1></th>
+      <th><w1>flow output:</w1></th>
+      <th><r1>problem:</r1></th>
+    </tr>
+    <tr>
     <th>  
       <img src="./i1i2w_00000003.gif" style="width:304px;height:228px;">
     </th>
+    <th>  
+      <img src="./b_00000003.png" style="width:304px;height:228px;">
+    </th>
     <th>
       <img src="./flow_00000003.png" style="width:304px;height:228px;"><br>
+    </th>
+    <th>
+      <w1>Depth doesn't work even after changing the intrinsics, tested differently not working</w1>
+    </th>
+    </tr>
+    </table>
+    <table>
+    <tr>
+      <th><h2>Sun 3D dataset</h2></th>
+      <th><w1>Depth:</w1></th>
+      <th><w1>I_left:</w1></th>
+      <th><w1>I_right:</w1></th> 
+      <th><w1>I_right_warped:</w1></th>
+      <th><w1>I_left to I_right:</w1></th>
+    </tr>
+    <tr>
+    <th><w1>Left to right:</w1></th>
+    <th>
+      <img src="./depth_00000004.png" style="width:304px;height:228px;"><br>
+    </th>
+    <th><img src="./i1_g_00000004.png" style="width:304px;height:228px;"></th>
+    <th>
+      <img src="./i2_g_00000004.png" style="width:304px;height:228px;">
+    </th> 
+    <th>
+      <img src="./i2w_00000004.png" style="width:304px;height:228px;">
+    </th> 
+    <th> 
+      <img src="./i1i2_00000004.gif" style="width:304px;height:228px;">
+    </th> 
+    </tr>
+    <tr>
+      <th><w1>I_right to I_right_warped:</w1></th>
+      <th><w1>blended_image:</w1></th>
+      <th><w1>flow output:</w1></th>
+      <th><r1>problem:</r1></th>
+    </tr>
+    <tr>
+    <th>  
+      <img src="./i1i2w_00000004.gif" style="width:304px;height:228px;">
+    </th>
+    <th>  
+      <img src="./b_00000004.png" style="width:304px;height:228px;">
+    </th>
+    <th>
+      <img src="./flow_00000004.png" style="width:304px;height:228px;"><br>
+    </th>
+    <th>
+      <w1>Depth is't working because we don't have extrinsics (rotation and translation), this is test with rotation of euromac</w1>
     </th>
     </tr>
     </table>
