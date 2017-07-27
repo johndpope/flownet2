@@ -61,13 +61,24 @@ with tf.Session() as sess:
     [flow_,i2_warped_] = sess.run([flow,i2_warped],feed_dict={x: i1_, y: i2_})
     flow_=flow_[0, :, :, :]
 #(normalized points)
-a=np.array([range(0,height),
+a=np.array([np.zeros(height),
             range(0,height),
             np.ones(height)],dtype=np.float32)
-b=np.array([[ 0.42 ,  0.537,  0.645,  0.431,  0.538],
-            [ 0.389,  0.375,  0.362,  0.357,  0.345],
-            [ 1.   ,  1.   ,  1.   ,  1.   ,  1.   ]])
-depth_=depth_estimation(c2_1,a,b)
+print(np.shape(a))
+for i in range(1,width):
+    tmp=np.array([i*np.ones(height),
+                  range(0,height),
+                  np.ones(height)],dtype=np.float32)
+    a=np.hstack([a,tmp])
+print(np.shape(a))
+b=a[0:2,:]+np.reshape(flow_,[2,height*width])
+a[0,:]=a[0,:]/width
+a[1,:]=a[1,:]/height
+b[0,:]=b[0,:]/width
+b[1,:]=b[1,:]/height
+depth_=depth_estimation(c1,c2,a,b)
+depth_=np.reshape(depth_[2,:],[1,height,width,1])
+depth_=np.tile(depth_,[1,1,1,3])
 print(np.shape(depth_))
 print(depth_)
 print('avg:',np.mean(depth_)) 
