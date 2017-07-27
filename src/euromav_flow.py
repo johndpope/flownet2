@@ -61,23 +61,25 @@ with tf.Session() as sess:
     [flow_,i2_warped_] = sess.run([flow,i2_warped],feed_dict={x: i1_, y: i2_})
     flow_=flow_[0, :, :, :]
 #(normalized points)
-a=np.array([np.zeros(height),
-            range(0,height),
-            np.ones(height)],dtype=np.float32)
+a=np.array([np.zeros(width),
+            range(0,width),
+            np.ones(width)],dtype=np.float32)
 print(np.shape(a))
-for i in range(1,width):
-    tmp=np.array([i*np.ones(height),
-                  range(0,height),
-                  np.ones(height)],dtype=np.float32)
+for i in range(1,height):
+    tmp=np.array([i*np.ones(width),
+                  range(0,width),
+                  np.ones(width)],dtype=np.float32)
     a=np.hstack([a,tmp])
 print(np.shape(a))
 b=a[0:2,:]+np.reshape(flow_,[2,height*width])
-a[0,:]=a[0,:]/width
-a[1,:]=a[1,:]/height
-b[0,:]=b[0,:]/width
-b[1,:]=b[1,:]/height
+a[0,:]=a[0,:]/height
+a[1,:]=a[1,:]/width
+b[0,:]=b[0,:]/height
+b[1,:]=b[1,:]/width
 depth_=depth_estimation(c1,c2,a,b)
 depth_=np.reshape(depth_[2,:],[1,height,width,1])
+# depth_=np.linalg.norm(depth_,axis=3)
+# depth_=np.reshape(depth_,[1,height,width,1])
 depth_=np.tile(depth_,[1,1,1,3])
 print(np.shape(depth_))
 print(depth_)

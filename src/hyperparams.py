@@ -25,6 +25,7 @@ val_txt='./val.txt'
 
 sun_dataset=False
 #camera extrinsics
+# intrinsics are in pixels
 if not sun_dataset:
 	resolution=[752, 480]
 	pixel_size=3.75E-3
@@ -36,7 +37,7 @@ if not sun_dataset:
 		   [0.999557249008, 0.0149672133247, 0.025715529948, -0.064676986768],
 	       [-0.0257744366974, 0.00375618835797, 0.999660727178, 0.00981073058949]],dtype=np.float32)
 
-	intrinsics_1= [458.654/752.0, 457.296/480.0, 367.215/752.0, 248.375/480.0] #fu, fv, cu, cv
+	intrinsics_1= [458.654, 457.296, 367.215, 248.375] #fu, fv, cu, cv
 	k1=np.array([[intrinsics_1[0],0,intrinsics_1[2]],
 					[0,intrinsics_1[1],intrinsics_1[3]],
 					[0,0,1]],dtype=np.float32)
@@ -46,7 +47,7 @@ if not sun_dataset:
 	b_c_2=np.array([[0.0125552670891, -0.999755099723, 0.0182237714554, -0.0198435579556],
 	       [0.999598781151, 0.0130119051815, 0.0251588363115, 0.0453689425024],
 	       [-0.0253898008918, 0.0179005838253, 0.999517347078, 0.00786212447038]],dtype=np.float32)
-	intrinsics_2=[457.587/752.0, 456.134/480.0, 379.999/752.0, 255.238/480.0] #fu, fv, cu, cv
+	intrinsics_2=[457.587, 456.134, 379.999, 255.238] #fu, fv, cu, cv
 	k2=np.array([[intrinsics_2[0],0,intrinsics_2[2]],
 					[0,intrinsics_2[1],intrinsics_2[3]],
 					[0,0,1]],dtype=np.float32)
