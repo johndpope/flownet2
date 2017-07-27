@@ -14,21 +14,21 @@ import lmbspecialops
 from cv2 import imread
 batch_size=1
 ##from sun dataset
-if sun_dataset:
-    input_a_path='./data/samples/img1.jpg'
-    input_b_path='./data/samples/img2.jpg' 
-    input_a = imread(input_a_path)
-    input_b = imread(input_b_path)
-    if input_a.max() > 1.0:
-        input_a = input_a / 255.0
-    if input_b.max() > 1.0:
-        input_b = input_b / 255.0
-    i1=tf.image.resize_images(input_a, [320, 448])
-    i2=tf.image.resize_images(input_b, [320, 448])
-    i1=tf.expand_dims(i1, 0)
-    i2=tf.expand_dims(i2, 0)
-else:### from tf records
-    (il_t1,il_t2,ir_t1,ir_t2,p_t1,p_t2)=bat.euromav_batch(train_txt,batch_size)#configs from dataset_configs
+# if sun_dataset:
+#     input_a_path='./data/samples/img1.jpg'
+#     input_b_path='./data/samples/img2.jpg' 
+#     input_a = imread(input_a_path)
+#     input_b = imread(input_b_path)
+#     if input_a.max() > 1.0:
+#         input_a = input_a / 255.0
+#     if input_b.max() > 1.0:
+#         input_b = input_b / 255.0
+#     i1=tf.image.resize_images(input_a, [320, 448])
+#     i2=tf.image.resize_images(input_b, [320, 448])
+#     i1=tf.expand_dims(i1, 0)
+#     i2=tf.expand_dims(i2, 0)
+# else:### from tf records
+(il_t1,il_t2,ir_t1,ir_t2,p_t1,p_t2)=bat.euromav_batch(train_txt,batch_size)#configs from dataset_configs
 
 x = tf.placeholder("float", shape=[batch_size, height, width,3])
 y = tf.placeholder("float", shape=[batch_size, height, width,3])
@@ -55,15 +55,12 @@ with tf.Session() as sess:
     coord = tf.train.Coordinator()
     threads = tf.train.start_queue_runners(coord=coord)
     saver.restore(sess, checkpoint)
-    if not sun_dataset:
-        i1_, i2_ = sess.run([il_t1,ir_t1])
-        i=3
-    else:
-        i1_, i2_ = sess.run([i1,i2])
-        i=4
+
+    i1_, i2_ = sess.run([il_t1,ir_t1])
+    
+    #undistort the image
     i1_=np.array(i1_[0,:,:,0])
     i2_=np.array(i2_[0,:,:,0])
-
     i1_=cv2.undistort(i1_,k1,distortion_coefficients_1)
     i2_=cv2.undistort(i2_,k2,distortion_coefficients_2)
     i1_=np.reshape(i1_,[1,height,width,1])
@@ -90,6 +87,7 @@ a[1,:]=a[1,:]/width
 b[0,:]=b[0,:]/height
 b[1,:]=b[1,:]/width
 depth_=depth_estimation(c1,c2,a,b)
+
 depth_=np.reshape(depth_[2,:],[1,height,width,1])
 depth_=np.linalg.norm(depth_,axis=3)
 depth_=np.reshape(depth_,[1,height,width,1])
@@ -102,7 +100,7 @@ print "Dumping few visuals"
 
 vis_dir='./vis/flownet2/'
 blended_image=0.5*i1_+0.5*i2_warped_
-i=3
+i=4
 dump2disk(vis_dir, i, i1_,i2_,i2_warped_,depth_,blended_image)
 #save flow image
 flow_img = flow_to_image(flow_)
