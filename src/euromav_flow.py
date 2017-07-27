@@ -9,7 +9,8 @@ from .net import Mode
 import uuid
 from .flowlib import flow_to_image
 from extras import warper
-import lmbspecialops
+from depth_estimation import *
+# import lmbspecialops
 from cv2 import imread
 batch_size=1
 ##from sun dataset
@@ -41,10 +42,8 @@ checkpoint='./checkpoints/FlowNet2/flownet-2.ckpt-0'
 flow=net.flowtest(inputs)
 (i2_warped,occ)=warper(y, flow)
 ###depth estimation
-flow_transposed=tf.transpose(flow, perm=[0,3, 1, 2])
-depth=lmbspecialops.flow_to_depth(flow_transposed,intrinsics_1,rotation,translation,rotation_format='matrix')
-depth=tf.transpose(depth, perm=[0,2, 3,1])
-depth=tf.tile(depth,[1,1,1,3])
+flow_transposed=tf.transpose(flow[0,:,:,:], perm=[2, 0, 1])#[channels,height,width]
+
 
 saver = tf.train.Saver()
 init_op = tf.group(tf.global_variables_initializer(), tf.local_variables_initializer())
@@ -59,13 +58,20 @@ with tf.Session() as sess:
     else:
         i1_, i2_ = sess.run([i1,i2])
         i=4
-    [flow_,i2_warped_,depth_] = sess.run([flow,i2_warped,depth],feed_dict={x: i1_, y: i2_})
+    [flow_,i2_warped_] = sess.run([flow,i2_warped],feed_dict={x: i1_, y: i2_})
     flow_=flow_[0, :, :, :]
-    print(np.shape(depth_))
-    depth_=depth_/(np.max(depth_))
-    print(depth_)
-    print('avg:',np.mean(depth_)) 
-    print('max:',np.max(depth_),'min:',np.min(depth_))       
+#(normalized points)
+a=np.array([range(0,height),
+            range(0,height),
+            np.ones(height)],dtype=np.float32)
+b=np.array([[ 0.42 ,  0.537,  0.645,  0.431,  0.538],
+            [ 0.389,  0.375,  0.362,  0.357,  0.345],
+            [ 1.   ,  1.   ,  1.   ,  1.   ,  1.   ]])
+depth_=depth_estimation(c2_1,a,b)
+print(np.shape(depth_))
+print(depth_)
+print('avg:',np.mean(depth_)) 
+print('range:',np.min(depth_),np.max(depth_))       
 print "Dumping few visuals" 
 
 vis_dir='./vis/flownet2/'

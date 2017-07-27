@@ -25,7 +25,7 @@ val_txt='./val.txt'
 
 sun_dataset=False
 #camera extrinsics
-if sun_dataset:
+if not sun_dataset:
 	resolution=[752, 480]
 	pixel_size=3.75E-3
 	sensor_size=pixel_size*resolution[0]*resolution[1]
@@ -38,21 +38,22 @@ if sun_dataset:
 	       [0.0, 0.0, 0.0, 1.0]],dtype=np.float32)
 
 	intrinsics_1= [458.654/752.0, 457.296/480.0, 367.215/752.0, 248.375/480.0] #fu, fv, cu, cv
-	# intrinsics_1= [457.296/480.0, 458.654/752.0, 248.375/480.0, 367.215/752.0] #fu, fv, cu, cv
-
+	k1=np.array([[intrinsics_1[0],0,intrinsics_1[2]],
+					[0,intrinsics_1[1],intrinsics_1[3]],
+					[0,0,1]],dtype=np.float32)
 	distortion_coefficients_1= [-0.28340811, 0.07395907, 0.00019359, 1.76187114e-05]
 	#camera 1 wrt body_frame11
 	b_c_2=np.array([[0.0125552670891, -0.999755099723, 0.0182237714554, -0.0198435579556],
 	       [0.999598781151, 0.0130119051815, 0.0251588363115, 0.0453689425024],
 	       [-0.0253898008918, 0.0179005838253, 0.999517347078, 0.00786212447038],
 	       [0.0, 0.0, 0.0, 1.0]],dtype=np.float32)
-	intrinsics_2=[457.587, 456.134, 379.999, 255.238] #fu, fv, cu, cv
-
+	intrinsics_2=[457.587/752.0, 456.134/480.0, 379.999/752.0, 255.238/480.0] #fu, fv, cu, cv
+	k2=np.array([[intrinsics_2[0],0,intrinsics_2[2]],
+					[0,intrinsics_2[1],intrinsics_2[3]],
+					[0,0,1]],dtype=np.float32)
 	c2_1= np.linalg.inv(b_c_2)*b_c_1
-
-	rotation=tf.constant(c2_1[0:3,0:3], dtype=tf.float32)
-
-	translation=tf.constant(c2_1[0:3,3], dtype=tf.float32)
+	rotation=np.array(c2_1[0:3,0:3], dtype=np.float32)
+	translation=np.reshape(c2_1[0:3,3],[1,3])
 	distortion_coefficients_2= [-0.28368365,  0.07451284, -0.00010473, -3.55590700e-05]
 else:
 	intrinsics_1=[0.89115971, 1.18821287, 0.5, 0.5]
