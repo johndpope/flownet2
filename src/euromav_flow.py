@@ -42,10 +42,10 @@ checkpoint='./checkpoints/FlowNet2/flownet-2.ckpt-0'
 flow=net.flowtest(inputs)
 (i2_warped,occ)=warper(y, flow)
 ###depth estimation
-flow_transposed=tf.transpose(flow[0,:,:,:], perm=[2, 0, 1])#[channels,height,width]
-depth=lmbspecialops.flow_to_depth(flow=flow_transposed,intrinsics=intrinsics_1,rotation=rotation,translation=translation,rotation_format='matrix')
-depth=tf.transpose(depth, perm=[0,2, 3,1])
-depth=tf.tile(depth,[1,1,1,3])
+# flow_transposed=tf.transpose(flow[0,:,:,:], perm=[2, 0, 1])#[channels,height,width]
+# depth=lmbspecialops.flow_to_depth(flow=flow_transposed,intrinsics=intrinsics_1,rotation=rotation,translation=translation,rotation_format='matrix')
+# depth=tf.transpose(depth, perm=[0,2, 3,1])
+# depth=tf.tile(depth,[1,1,1,3])
 
 
 saver = tf.train.Saver()
@@ -61,29 +61,39 @@ with tf.Session() as sess:
     else:
         i1_, i2_ = sess.run([i1,i2])
         i=4
-    [flow_,i2_warped_,depth_] = sess.run([flow,i2_warped,depth],feed_dict={x: i1_, y: i2_})
+    i1_=np.array(i1_[0,:,:,0])
+    i2_=np.array(i2_[0,:,:,0])
+
+    i1_=cv2.undistort(i1_,k1,distortion_coefficients_1)
+    i2_=cv2.undistort(i2_,k2,distortion_coefficients_2)
+    i1_=np.reshape(i1_,[1,height,width,1])
+    i2_=np.reshape(i2_,[1,height,width,1])
+    i1_=np.tile(i1_,[1,1,1,3])
+    i2_=np.tile(i2_,[1,1,1,3])
+
+    [flow_,i2_warped_] = sess.run([flow,i2_warped],feed_dict={x: i1_, y: i2_})
     flow_=flow_[0, :, :, :]
 #(normalized points) cv2 version
-# a=np.array([np.zeros(width),
-#             range(0,width),
-#             np.ones(width)],dtype=np.float32)
-# print(np.shape(a))
-# for i in range(1,height):
-#     tmp=np.array([i*np.ones(width),
-#                   range(0,width),
-#                   np.ones(width)],dtype=np.float32)
-#     a=np.hstack([a,tmp])
-# print(np.shape(a))
-# b=a[0:2,:]+np.reshape(flow_,[2,height*width])
-# a[0,:]=a[0,:]/height
-# a[1,:]=a[1,:]/width
-# b[0,:]=b[0,:]/height
-# b[1,:]=b[1,:]/width
-# depth_=depth_estimation(c1,c2,a,b)
-# depth_=np.reshape(depth_[2,:],[1,height,width,1])
-# depth_=np.linalg.norm(depth_,axis=3)
-# depth_=np.reshape(depth_,[1,height,width,1])
-# depth_=np.tile(depth_,[1,1,1,3])
+a=np.array([np.zeros(width),
+            range(0,width),
+            np.ones(width)],dtype=np.float32)
+print(np.shape(a))
+for i in range(1,height):
+    tmp=np.array([i*np.ones(width),
+                  range(0,width),
+                  np.ones(width)],dtype=np.float32)
+    a=np.hstack([a,tmp])
+print(np.shape(a))
+b=a[0:2,:]+np.reshape(flow_,[2,height*width])
+a[0,:]=a[0,:]/height
+a[1,:]=a[1,:]/width
+b[0,:]=b[0,:]/height
+b[1,:]=b[1,:]/width
+depth_=depth_estimation(c1,c2,a,b)
+depth_=np.reshape(depth_[2,:],[1,height,width,1])
+depth_=np.linalg.norm(depth_,axis=3)
+depth_=np.reshape(depth_,[1,height,width,1])
+depth_=np.tile(depth_,[1,1,1,3])
 print(np.shape(depth_))
 print(depth_)
 print('avg:',np.mean(depth_)) 
@@ -92,6 +102,7 @@ print "Dumping few visuals"
 
 vis_dir='./vis/flownet2/'
 blended_image=0.5*i1_+0.5*i2_warped_
+i=3
 dump2disk(vis_dir, i, i1_,i2_,i2_warped_,depth_,blended_image)
 #save flow image
 flow_img = flow_to_image(flow_)
