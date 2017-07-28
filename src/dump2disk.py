@@ -68,6 +68,6 @@ def dump2disk(vis_dir, step, i1_g,i2_g,i2_warped, depth,blended_image):
     saveim('i2_g', i2_g)
     saveim('i2w', i2_warped)
     savegif('i1i2', i1_g, i2_g)
-    savegif('i1i2w',i2_g, i2_warped)
+    savegif('i1i2w',i1_g, i2_warped)
     saveim('depth', depth)
     saveim('b', blended_image)

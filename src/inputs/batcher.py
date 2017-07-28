@@ -3,6 +3,7 @@ import sys
 sys.path.append('..')
 import os
 from readers import *
+from ..hyperparams import new_resol
 dataset_location='./records/'
 # sys.path.append('../writers_readers')
 # from read_svkitti_tfrecords import *
@@ -21,6 +22,7 @@ def euromav_batch(dataset,bs,shuffle=True,dotrim=False):
 
     i1_l = tf.cast(i1_l,tf.float32) * 1./255 - 0.5
     i2_l = tf.cast(i2_l,tf.float32) * 1./255 - 0.5
+    # if new_resol:
     i1_l = tf.image.resize_images(i1_l, [320, 448])
     i2_l = tf.image.resize_images(i2_l, [320, 448])
     i1_l =tf.tile(i1_l,[1,1,3])
@@ -28,6 +30,7 @@ def euromav_batch(dataset,bs,shuffle=True,dotrim=False):
 
     i1_r = tf.cast(i1_r,tf.float32) * 1./255 - 0.5
     i2_r = tf.cast(i2_r,tf.float32) * 1./255 - 0.5
+    # if new_resol:
     i1_r = tf.image.resize_images(i1_r, [320, 448])
     i2_r = tf.image.resize_images(i2_r, [320, 448])
     i1_r =tf.tile(i1_r,[1,1,3])

@@ -6,6 +6,7 @@ max_iterations=100000
 batch_size=8
 height=320
 width=448
+new_resol=True
 
 #control parameters
 do_zero_motion=False
@@ -28,8 +29,9 @@ val_txt='./val.txt'
 resolution=[752, 480]
 height_old=480
 width_old=752
-scal_h=height/height_old
-scal_w=width/width_old
+scal_w=float(width)/float(width_old)
+scal_h=float(height)/float(height_old)
+print('scaling',scal_w,scal_h)
 pixel_size=3.75E-3
 sensor_size=pixel_size*resolution[0]*resolution[1]
 camera_model='pinhole'
@@ -41,10 +43,16 @@ b_c_1=np.array([[0.0148655429818, -0.999880929698, 0.00414029679422, -0.02164014
        [0,0,0,1]],dtype=np.float32)
 
 intrinsics_1= [458.654, 457.296, 367.215, 248.375] #fu, fv, cu, cv
+s_intrinsics_1= [458.654*scal_w, 457.296*scal_h, 367.215*scal_w, 248.375*scal_h] #fu, fv, cu, cv
 k1=np.array([[intrinsics_1[0],0,intrinsics_1[2]],
 				[0,intrinsics_1[1],intrinsics_1[3]],
 				[0,0,1]],dtype=np.float32)
-c1=np.matmul(k1,b_c_1[0:3,:])
+scaled_k1=np.array([[s_intrinsics_1[0],0,s_intrinsics_1[2]],
+				[0,s_intrinsics_1[1],s_intrinsics_1[3]],
+				[0,0,1]],dtype=np.float32)
+
+c1=np.matmul(scaled_k1,b_c_1[0:3,:])
+
 distortion_coefficients_1= np.array([-0.28340811, 0.07395907, 0.00019359, 1.76187114e-05],dtype=np.float32)
 #camera 1 wrt body_frame11
 b_c_2=np.array([[0.0125552670891, -0.999755099723, 0.0182237714554, -0.0198435579556],
@@ -52,10 +60,15 @@ b_c_2=np.array([[0.0125552670891, -0.999755099723, 0.0182237714554, -0.019843557
        [-0.0253898008918, 0.0179005838253, 0.999517347078, 0.00786212447038],
        [0,0,0,1]],dtype=np.float32)
 intrinsics_2=np.array([457.587, 456.134, 379.999, 255.238],dtype=np.float32) #fu, fv, cu, cv
+s_intrinsics_2=np.array([457.587*scal_w, 456.134*scal_h, 379.999*scal_w, 255.238*scal_h],dtype=np.float32) #fu, fv, cu, cv
 k2=np.array([[intrinsics_2[0],0,intrinsics_2[2]],
 				[0,intrinsics_2[1],intrinsics_2[3]],
 				[0,0,1]],dtype=np.float32)
-c2=np.matmul(k2,b_c_2[0:3,:])
+scaled_k2=np.array([[s_intrinsics_2[0],0,s_intrinsics_2[2]],
+				[0,s_intrinsics_2[1],s_intrinsics_2[3]],
+				[0,0,1]],dtype=np.float32)
+
+c2=np.matmul(scaled_k2,b_c_2[0:3,:])
 c2_1= np.matmul(np.linalg.inv(b_c_2),(b_c_1))
 rotation=np.array(c2_1[0:3,0:3], dtype=np.float32)
 translation=np.reshape(c2_1[0:3,3],[1,3])
