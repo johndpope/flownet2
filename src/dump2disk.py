@@ -18,7 +18,7 @@ from skimage.draw import *
 GIFDURATION = 0.2
 
 
-def dump2disk(vis_dir, step, i1_g,i2_g,i2_warped, depth,blended_image):
+def dump2disk(vis_dir, step, i1_g,i2_g,i2_warped,depth):
     try:
         os.mkdir(vis_dir)
     except:
@@ -30,7 +30,9 @@ def dump2disk(vis_dir, step, i1_g,i2_g,i2_warped, depth,blended_image):
     getfilegif = lambda name: os.path.join(vis_dir,name+ "_"+'{:08}'.format(step)+".gif")
     savefile = lambda name, img: imsave(getfile(name), img)
     def normalize(img):
-        img=(img-np.min(img))/(np.max(img)-np.min(img))
+        img[0,:,:,0]=(img[0,:,:,0]-np.min(img[0,:,:,0]))/(np.max(img[0,:,:,0])-np.min(img[0,:,:,0]))
+        img[0,:,:,1]=(img[0,:,:,1]-np.min(img[0,:,:,1]))/(np.max(img[0,:,:,1])-np.min(img[0,:,:,1]))
+        img[0,:,:,2]=(img[0,:,:,2]-np.min(img[0,:,:,2]))/(np.max(img[0,:,:,2])-np.min(img[0,:,:,2]))
         return img
     def saveim(name, img):
         img=normalize(img)
@@ -70,4 +72,4 @@ def dump2disk(vis_dir, step, i1_g,i2_g,i2_warped, depth,blended_image):
     savegif('i1i2', i1_g, i2_g)
     savegif('i1i2w',i1_g, i2_warped)
     saveim('depth', depth)
-    saveim('b', blended_image)
+    # saveim('b', blended_image)

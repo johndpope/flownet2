@@ -9,15 +9,16 @@ from .net import Mode
 import uuid
 from .flowlib import flow_to_image
 from extras import warper
-from depth_estimation import *
+from camera_calibration import depth_estimation
 from cv2 import imread
 import lmbspecialops
 batch_size=1
 # intrinsics
 intrinsics_1=[725,725,620.5,187]
-
-K=np.array([[725.0,    0, 620.5],
-  			[0,    725.0, 187.0],
+scal_w=float(width)/float(1242)
+scal_h=float(height)/float(375)
+K=np.array([[725.0*scal_w,    0, 620.5*scal_w],
+  			[0,    725.0*scal_h, 187.0*scal_h],
    			[0,      0,    1]],dtype=np.float32)
 #extrinsics
 c1=np.array([[-0.6368979, -0.02389242, -0.7705778, -7.061051],
@@ -76,30 +77,7 @@ with tf.Session() as sess:
     [flow_,i2_warped_] = sess.run([flow,i2_warped],feed_dict={x: i1_, y: i2_})
     flow_=flow_[0, :, :, :]
 ##cv2 version
-a=np.array([np.zeros(width),
-            range(0,width),
-            np.ones(width)],dtype=np.float32)
-print(np.shape(a))
-for i in range(1,height):
-    tmp=np.array([i*np.ones(width),
-                  range(0,width),
-                  np.ones(width)],dtype=np.float32)
-    a=np.hstack([a,tmp])
-print(np.shape(a))
-b=a[0:2,:]+np.reshape(flow_,[2,height*width])
-a[0,:]=a[0,:]/height
-a[1,:]=a[1,:]/width
-b[0,:]=b[0,:]/height
-b[1,:]=b[1,:]/width
-depth_=depth_estimation(P1,P2,a,b)
-depth_=np.reshape(depth_[2,:],[1,height,width,1])
-# depth_=np.linalg.norm(depth_,axis=3)
-# depth_=np.reshape(depth_,[1,height,width,1])
-depth_=np.tile(depth_,[1,1,1,3])
-
-print(np.shape(depth_))
-print('avg:',np.mean(depth_)) 
-print('range:',np.min(depth_),np.max(depth_))       
+depth_=depth_estimation(flow_,P1,P2,height,width)   
 print "Dumping few visuals" 
 
 vis_dir='./vis/flownet2/'

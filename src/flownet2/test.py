@@ -19,8 +19,8 @@ net = FlowNet2(mode=Mode.TEST)
 # )
 
 # on chair dataset
-input_a='./data/samples/0img0.ppm'
-input_b='./data/samples/0img1.ppm' 
+input_a='./data/samples/left_rectified.png'
+input_b='./data/samples/right_rectified.png' 
 out='./vis/flownet2/'
 # Train on the data
 net.test(

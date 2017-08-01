@@ -29,8 +29,10 @@ val_txt='./val.txt'
 resolution=[752, 480]
 height_old=480
 width_old=752
-scal_w=float(width)/float(width_old)
-scal_h=float(height)/float(height_old)
+scal_w=1
+# float(width)/float(width_old)
+scal_h=1
+# float(height)/float(height_old)
 print('scaling',scal_w,scal_h)
 pixel_size=3.75E-3
 sensor_size=pixel_size*resolution[0]*resolution[1]

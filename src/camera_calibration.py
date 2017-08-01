@@ -1,7 +1,8 @@
 import cv2
 import numpy as np
 import tensorflow as tf
-from hyperparams import *
+# from hyperparams import *
+
 def undistort(i1_,i2_):   
 	if not new_resol:
 		h=height_old
@@ -33,7 +34,7 @@ def undistort(i1_,i2_):
 	i2_=np.tile(i2_,[1,1,1,3])
 	return(i1_,i2_)
 
-def depth_estimation( flow ):
+def depth_estimation(flow,c1,c2,height,width):
 	# c1=np.vstack([c1,[[0,0,0,1]]])
 	# c2=np.vstack([c2,[[0,0,0,1]]])
 	# p2=np.matmul(np.linalg.inv(c2),(c1))

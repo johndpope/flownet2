@@ -135,16 +135,37 @@ class Net(object):
         predictions = self.model(inputs, training_schedule)
         pred_flow = predictions['flow']
         saver = tf.train.Saver()
-        (i2_warped,occ)=warper(inputs['input_a'], pred_flow)
+        (i2_warped,occ)=warper(inputs['input_b'], pred_flow)
         with tf.Session() as sess:
             saver.restore(sess, checkpoint)
             [pred_flow_,i2_warped_] = sess.run([pred_flow,i2_warped])
             pred_flow_=pred_flow_[0, :, :, :]
+        x_flow=(pred_flow_[:,:,0])
+        #baseline
+        b=-36.5
+        f=1
+        # f=332.38475539
+        Z=np.divide(b*f,x_flow)
+        # Z[abs(Z)>50]=0
+        Z=np.expand_dims(Z,axis=0)
+        Z=np.expand_dims(Z,axis=3)
+        Z=np.tile(Z,[1,1,1,3])
+        # m=np.mean(Z)
+        #blue if closer
+        Z[0,abs(Z[0,:,:,2])>5,2]=0
+        #green if middle
+        Z[0,np.logical_or(abs(Z[0,:,:,1])<3, abs(Z[0,:,:,1])>10),1]=0
+        #red far away
+        Z[0,np.logical_or(abs(Z[0,:,:,0])<7, abs(Z[0,:,:,0])>20),0]=0
+        print(Z)
+
+        print(np.shape(x_flow))
         input_a=np.expand_dims(input_a, axis=0)
         input_b=np.expand_dims(input_b, axis=0)
-        dump2disk(out_path, 2, input_a,input_b,i2_warped_)
+        i=4
+        dump2disk(out_path, i, input_a,input_b,i2_warped_,Z)
         flow_img = flow_to_image(pred_flow_)
-        full_out_path = os.path.join(out_path, "flow_"+'{:08}'.format(2)  + '.png')
+        full_out_path = os.path.join(out_path, "flow_"+'{:08}'.format(i)  + '.png')
         imsave(full_out_path, flow_img)
             # unique_name = 'flow-' + str(uuid.uuid4())
             # if save_image:
