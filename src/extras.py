@@ -56,7 +56,7 @@ def quat2rotmat(q):#tf array [qw,qx,qy,qz] as the data is in this format
     q3=tf.reshape(q[:,3],[bs,1])
     #normalization
     z=tf.concat([tf.square(q0),tf.square(q1),tf.square(q2),tf.square(q3)],1)
-    #z=tf.sqrt(tf.reduce_sum(z, 1, keep_dims=True)) 
+    z=tf.sqrt(tf.reduce_sum(z, 1, keep_dims=True)) #only this normalization gives orthonormal matrix
     z=tf.reduce_sum(z, 1, keep_dims=True)
     q0=tf.div(q0,z)
     q1=tf.div(q1,z)
@@ -80,9 +80,14 @@ def quat2rotmat(q):#tf array [qw,qx,qy,qz] as the data is in this format
     # R=tf.array([])
 def pose2mat(p):
     shape = p.get_shape()
-    bs = int(shape[0])
+    bs = int(shape[0])  
     q=p[:,3:7]
+
     t=tf.reshape(p[:,0:3],[bs,3])
+    # z=tf.concat([tf.square(tf.reshape(t[:,0],[bs,1])),tf.square(tf.reshape(t[:,1],[bs,1])),tf.square(tf.reshape(t[:,2],[bs,1]))],1)
+    # z=tf.reduce_sum(z, 1, keep_dims=True)
+    # t=tf.div(t,z)
+
     R=quat2rotmat(q)
     T=merge_rt(R,t)
     return T

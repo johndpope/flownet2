@@ -55,6 +55,7 @@ class Net(object):
             fuse_interconv0 = predictions['fuse_interconv0']
         else:
             raise('didnot choose architecture')
+            
         with slim.arg_scope([slim.fully_connected,slim.conv2d],
                         activation_fn=None,
                         # normalizer_fn=slim.batch_norm,
@@ -91,6 +92,8 @@ class Net(object):
                                 conv_l=slim.conv2d(fuse_interconv0,1,3,activation_fn=None, scope='f1')
                                 conv_l=tf.contrib.layers.flatten(conv_l)
                                 pred = slim.fully_connected(conv_l, 7,activation_fn=None,scope="f2")
+                                # pred_t = slim.fully_connected(conv_l, 3,activation_fn=None,scope="f3")
+                                # pred=tf.concat([pred_t,pred_q],axis=1)
                             else:
                                 conv_l=slim.conv2d(fuse_interconv0,7,3,activation_fn=None, scope='f1')
                                 pred = slim.avg_pool2d(conv_l,[80,112],stride=2,padding='VALID',scope="f2")

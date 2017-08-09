@@ -6,12 +6,15 @@ EPS = 1e-6
 
 def rtLoss(rt_e, rt_g):
     with tf.variable_scope("rtLoss"):
-        rt_eg = ominus(rt_e,rt_g)
-        rtd = tf.reduce_mean(compute_distance(rt_eg))
-        rta = tf.reduce_mean(compute_angle(rt_eg))
-        td = tf.reduce_mean(compute_t_diff(rt_e,rt_g))
-        ta = tf.reduce_mean(compute_t_ang(rt_e,rt_g))
-        return rtd, rta, td, ta
+        r_e,t_e = split_rt(rt_e)
+        r_g,t_g = split_rt(rt_g)
+        print_shape(r_e)
+        print_shape(r_g)
+        rt_eg = tf.matmul(tf.transpose(r_e,[0,2,1]),r_g)
+        # rt_eg = tf.matmul(tf.matrix_inverse(r_e),r_g)    
+        rtd = tf.reduce_mean(norm(t_e-t_g))
+        rta = tf.reduce_mean(compute_angle_3x3(rt_eg))
+        return rtd, rta
 
 def safe_rtLoss(rt_e, rt_g):
     with tf.variable_scope("rtLoss"):

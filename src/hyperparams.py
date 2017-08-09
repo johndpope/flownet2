@@ -16,9 +16,9 @@ pretrained_flow=True
 archi='Flownetc'
 quater=True
 fine_tune=False
-do_avgpooling=False
+do_avgpooling=True
 if not do_zero_motion:
-	Mode='test'
+	Mode='train'
 
 #read tf records txt files
 train_txt='./train.txt'
@@ -76,6 +76,18 @@ rotation=np.array(c2_1[0:3,0:3], dtype=np.float32)
 translation=np.reshape(c2_1[0:3,3],[1,3])
 distortion_coefficients_2= np.array([-0.28368365,  0.07451284, -0.00010473, -3.55590700e-05])
 
+
+generate_trajectory=False
+if generate_trajectory:
+	max_iterations=100
+	batch_size=1
+	Mode='test'
+	train_txt='./records.txt'
+
+
+
+
+name='lr_e_4_'
 #log directories
 log_dir='./graphs/'
 if do_zero_motion:
@@ -83,8 +95,8 @@ if do_zero_motion:
 	validation_log_dir=log_dir+'zero_validation'
 if Mode=='train':
 	dir_='train_'+('2_' if archi=='Flownet2' else 'c_')+('sc_' if not quater else 'q_')+('avg' if do_avgpooling else '')+('_scratch' if not pretrained_flow else '')+('_fine/' if fine_tune else '/')
-	train_log_dir=log_dir+dir_
-	validation_log_dir=log_dir+'validation'+('2_' if archi=='Flownet2' else 'c_')+('sc_' if not quater else 'q_')+('avg' if do_avgpooling else '')+('_scratch' if not pretrained_flow else '')+('_fine/' if fine_tune else '/')
+	train_log_dir=log_dir+name+dir_
+	validation_log_dir=log_dir+name+'validation'+('2_' if archi=='Flownet2' else 'c_')+('sc_' if not quater else 'q_')+('avg' if do_avgpooling else '')+('_scratch' if not pretrained_flow else '')+('_fine/' if fine_tune else '/')
 if Mode=='test':
 	dir_='test_'+('2_' if archi=='Flownet2' else 'c_')+('sc_' if not quater else 'q_')+('avg' if do_avgpooling else '')+('_scratch' if not pretrained_flow else '')+('_fine/' if fine_tune else '/')
 	test_log_dir=log_dir+dir_
@@ -93,7 +105,7 @@ vis_dir='./vis/'+dir_
 #checkpoint name to save
 checkpoint_dir='./checkpoints/'
 if Mode=='train':
-	save_dir=checkpoint_dir+('last_layer_' if not fine_tune else 'fine_tune_')+('flownet2_' if archi=='Flownet2' else 'flownetc_')+('q_' if quater else 'sc_')+('_scratch' if not pretrained_flow else '')+('avg/' if do_avgpooling else 'fc/')+('last_layer.ckpt' if not fine_tune else 'fine_tune.ckpt')
+	save_dir=checkpoint_dir+('last_layer_' if not fine_tune else 'fine_tune_')+('flownet2_' if archi=='Flownet2' else 'flownetc_')+('q_' if quater else 'sc_')+('_scratch' if not pretrained_flow else '')+('avg' if do_avgpooling else 'fc')+(name+'/')+('last_layer.ckpt' if not fine_tune else 'fine_tune.ckpt')
 
 #checkpoint to load
 if (Mode=='train'): 
@@ -107,7 +119,11 @@ if (Mode=='train'):
 		checkpoint=checkpoint_dir+'last_layer_'+('flownet2_' if archi=='Flownet2' else 'flownetc_')+('q_' if quater else 'sc_')+('avg/' if do_avgpooling else 'fc/')+'last_layer.ckpt' 
 else:
 	variables_to_exclude=[]
+	# checkpoint=checkpoint_dir+'translation_flownetc_q_fc/'+'last_layer.ckpt'
+	# checkpoint=checkpoint_dir+'last_layer_flownetc_q_fconlyrotation/'+'last_layer.ckpt' 
 	checkpoint=checkpoint_dir+'last_layer_'+('flownet2_' if archi=='Flownet2' else 'flownetc_')+('q_' if quater else 'sc_')+('avg/' if do_avgpooling else 'fc/')+'last_layer.ckpt' 
+
+
 def details():
 	sys.stdout.write('-'*30)
 	sys.stdout.write('\n    %s     %s\n'%(Mode,archi))
