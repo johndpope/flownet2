@@ -26,18 +26,12 @@ elif (archi=="Flownetc"):
 	net=FlowNetC()
 else:
 	raise("didnot choose architecture")
+if not do_zero_motion:
+	variables_to_restore = slim.get_variables_to_restore(exclude=variables_to_exclude) #these are my last two layers
+	saver = tf.train.Saver(variables_to_restore)
 
-variables_to_restore = slim.get_variables_to_restore(exclude=variables_to_exclude) #these are my last two layers
-saver = tf.train.Saver(variables_to_restore)
-
-if Mode=='test':
-	writer_test = tf.summary.FileWriter(test_log_dir, None)
-else:
-	writer_t = tf.summary.FileWriter(train_log_dir, None)
-	writer_v = tf.summary.FileWriter(validation_log_dir, None)
-
-(il_t1,il_t2,ir_t1,ir_t2,p_t1,p_t2)=bat.euromav_batch(train_txt,batch_size,shuffle=False)#configs from dataset_configs
-(il_v1,il_v2,ir_v1,ir_v2,p_v1,p_v2)=bat.euromav_batch(val_txt,batch_size,shuffle=False)#configs from dataset_configs
+(il_t1,il_t2,ir_t1,ir_t2,p_t1,p_t2)=bat.euromav_batch(train_txt,batch_size,shuffle=True)#configs from dataset_configs
+(il_v1,il_v2,ir_v1,ir_v2,p_v1,p_v2)=bat.euromav_batch(val_txt,batch_size,shuffle=True)#configs from dataset_configs
 
 rt12_g = ominus(p_t2, p_t1)
 
@@ -55,46 +49,66 @@ if (do_zero_motion):
 	 [0,0,1,0],
 	 [0,0,0,1]]], dtype=tf.float32),[1,4,4]),[batch_size,1,1])
 	(rtd,rta) = rtLoss(RT_e,rt12_g)
-	cost = rta+(1.0*rtd)
-elif Mode=='train':
+	cost = rta+(10*rtd)
+elif Mode=='train' or fine_tune:
 	(rtd, rta) = rtLoss(RT_e, rt12_g)
-	cost = rta+(1.0*rtd)
+	cost = rta+(10*rtd)
 	optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(cost)
 else:
 	(rtd, rta) = rtLoss(RT_e, rt12_g)
-	cost = rta+(1.0*rtd)
+	cost = rta+(10*rtd)
 	
 
 with tf.name_scope("RT_loss"):
 		odo_loss_sum = tf.summary.scalar("loss", cost)
 		rtd_sum = tf.summary.scalar("rtd", rtd)
 		rta_sum = tf.summary.scalar("rta", rta)
+img_sum = tf.summary.image("image_check", x)
+
 summary = tf.summary.merge([odo_loss_sum,rtd_sum,rta_sum])
 init_op = tf.group(tf.global_variables_initializer(), tf.local_variables_initializer())
-saver1 = tf.train.Saver()
+saver1 = tf.train.Saver(variables_to_restore)
 with tf.Session() as sess:
+	if Mode=='test':
+		writer_test = tf.summary.FileWriter(test_log_dir, None)
+	else:
+		writer_t = tf.summary.FileWriter(train_log_dir, sess.graph)
+		writer_v = tf.summary.FileWriter(validation_log_dir, None)
+
 	sess.run(init_op)
 	coord = tf.train.Coordinator()
 	threads = tf.train.start_queue_runners(coord=coord)
 	if (not do_zero_motion) and (pretrained_flow):
-		if Mode=='test':
+		if Mode=='test' or fine_tune:
 			saver1.restore(sess, checkpoint)
 		else:
 			saver.restore(sess, checkpoint)
 	for i in range(0,max_iterations):
-		if (Mode=='train'):
+		if (Mode=='train') or fine_tune:
 			# train dataset
 			i1_, i2_ = sess.run([il_t1,il_t2])
-			[opt, train_loss, summ1,RT_e_,rt12_g_] = sess.run([optimizer, cost, summary,RT_e,rt12_g],feed_dict={x: i1_, y: i2_})
+			if (i%10000 ==0):
+				[opt, train_loss, summ1,RT_e_,rt12_g_,img_sum_] = sess.run([optimizer, cost, summary,RT_e,rt12_g,img_sum],feed_dict={x: i1_, y: i2_})
+			else:
+				[opt, train_loss, summ1,RT_e_,rt12_g_] = sess.run([optimizer, cost, summary,RT_e,rt12_g],feed_dict={x: i1_, y: i2_})
+
 			writer_t.add_summary(summ1,i)
+			writer_t.add_summary(img_sum_,i)
+
 			#validation dataset
 			i1_, i2_ = sess.run([il_v1,il_v2])
-			[val_loss, summ2] = sess.run([cost, summary],feed_dict={x: i1_, y: i2_})
+			if (i%10000 ==0):
+				[val_loss, summ2,img_sumv_] = sess.run([cost, summary,img_sum],feed_dict={x: i1_, y: i2_})
+			else:
+				[val_loss, summ2] = sess.run([cost, summary],feed_dict={x: i1_, y: i2_})
+
 			sys.stdout.write("\r")
 			sys.stdout.write(spinner.next())
 			sys.stdout.write('  iteration:%d train loss:%f validation loss:%f'%(i,train_loss,val_loss))
 			sys.stdout.flush()
 			writer_v.add_summary(summ2,i)
+			writer_v.add_summary(img_sumv_,i)
+
 			if (i%10000 ==0):
 				save_path = saver1.save(sess, save_dir)
 				print("Model saved in file: %s at step %d" % (save_path,i))
@@ -103,11 +117,11 @@ with tf.Session() as sess:
 
 		elif do_zero_motion:
 			# train dataset
-			i1_, i2_ = sess.run([i_t1,i_t2])
+			i1_, i2_ = sess.run([il_t1,il_t2])
 			[train_loss, summ1] = sess.run([cost, summary],feed_dict={x: i1_, y: i2_})
 			writer_t.add_summary(summ1,i)
 			#validation dataset
-			i1_, i2_ = sess.run([i_v1,i_v2])
+			i1_, i2_ = sess.run([il_v1,il_v2])
 			[val_loss, summ2] = sess.run([cost, summary],feed_dict={x: i1_, y: i2_})
 			sys.stdout.write("\r")
 			sys.stdout.write(spinner.next())
@@ -123,7 +137,7 @@ with tf.Session() as sess:
 			# new_point_=np.matmul(RT_e_,prev_point)
 			sys.stdout.write('  iteration:%d test loss:%f, rta loss:%f,rtd loss:%f'%(i,test_loss,rta_,rtd_))
 			# print(new_point_,p_t1_[0,0:3,3])
-			print('pred_=',np.reshape(RT_e_[0,0:3,3],[1,3]),'gt=',np.reshape(rt12_g_[0,0:3,3],[1,3]))
+			# print('pred_=',np.reshape(RT_e_[0,0:3,3],[1,3]),'gt=',np.reshape(rt12_g_[0,0:3,3],[1,3]))
 			sys.stdout.flush()
 			# if (i%10000 ==0):
 			# 	print "Dumping few visuals" 

@@ -12,10 +12,17 @@ def rtLoss(rt_e, rt_g):
         print_shape(r_g)
         rt_eg = tf.matmul(tf.transpose(r_e,[0,2,1]),r_g)
         # rt_eg = tf.matmul(tf.matrix_inverse(r_e),r_g)    
-        rtd = tf.reduce_mean(norm(t_e-t_g))
+        # rtd = tf.reduce_mean(norm(t_e-t_g))
+        rtd=l2Loss(t_e,t_g)
         rta = tf.reduce_mean(compute_angle_3x3(rt_eg))
         return rtd, rta
-
+# def rtLoss(rt_e, rt_g):
+#     with tf.variable_scope("rtLoss"):
+#         rt_eg = ominus(rt_e,rt_g)
+#         rtd = tf.reduce_mean(compute_distance(rt_eg))
+#         rta = tf.reduce_mean(compute_angle(rt_eg))
+#         return rtd, rta  
+        
 def safe_rtLoss(rt_e, rt_g):
     with tf.variable_scope("rtLoss"):
         rt_eg = ominus(rt_e,rt_g)

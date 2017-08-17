@@ -15,10 +15,14 @@ pretrained_flow=True
 
 archi='Flownetc'
 quater=True
+
+
 fine_tune=False
-do_avgpooling=True
-if not do_zero_motion:
-	Mode='train'
+do_avgpooling=False
+if (not do_zero_motion) and (not fine_tune):
+	Mode='test'
+else:
+	Mode='None'
 
 #read tf records txt files
 train_txt='./train.txt'
@@ -87,41 +91,43 @@ if generate_trajectory:
 
 
 
-name='lr_e_4_'
+name='W_10_FineTune_6_'
 #log directories
 log_dir='./graphs/'
 if do_zero_motion:
-	train_log_dir=log_dir+'zero_train'
-	validation_log_dir=log_dir+'zero_validation'
-if Mode=='train':
+	train_log_dir=log_dir+'L2_zero_train'
+	validation_log_dir=log_dir+'L2_zero_validation'
+	checkpoint='None'
+if Mode=='train' or fine_tune:
 	dir_='train_'+('2_' if archi=='Flownet2' else 'c_')+('sc_' if not quater else 'q_')+('avg' if do_avgpooling else '')+('_scratch' if not pretrained_flow else '')+('_fine/' if fine_tune else '/')
 	train_log_dir=log_dir+name+dir_
 	validation_log_dir=log_dir+name+'validation'+('2_' if archi=='Flownet2' else 'c_')+('sc_' if not quater else 'q_')+('avg' if do_avgpooling else '')+('_scratch' if not pretrained_flow else '')+('_fine/' if fine_tune else '/')
+	vis_dir='./vis/'+dir_
 if Mode=='test':
 	dir_='test_'+('2_' if archi=='Flownet2' else 'c_')+('sc_' if not quater else 'q_')+('avg' if do_avgpooling else '')+('_scratch' if not pretrained_flow else '')+('_fine/' if fine_tune else '/')
 	test_log_dir=log_dir+dir_
-
-vis_dir='./vis/'+dir_
+	vis_dir='./vis/'+dir_
 #checkpoint name to save
 checkpoint_dir='./checkpoints/'
-if Mode=='train':
+if Mode=='train' or fine_tune:
 	save_dir=checkpoint_dir+('last_layer_' if not fine_tune else 'fine_tune_')+('flownet2_' if archi=='Flownet2' else 'flownetc_')+('q_' if quater else 'sc_')+('_scratch' if not pretrained_flow else '')+('avg' if do_avgpooling else 'fc')+(name+'/')+('last_layer.ckpt' if not fine_tune else 'fine_tune.ckpt')
 
 #checkpoint to load
-if (Mode=='train'): 
-	if not fine_tune:
-		learning_rate=0.00001
-		variables_to_exclude=["f1","f2","beta2_power","beta1_power"]
-		checkpoint=checkpoint_dir+('FlowNet2/flownet-2.ckpt-0'if archi=='Flownet2' else 'FlowNetC/flownet-C.ckpt-0')
-	else:
-		learning_rate=0.0000001
-		variables_to_exclude=[]
-		checkpoint=checkpoint_dir+'last_layer_'+('flownet2_' if archi=='Flownet2' else 'flownetc_')+('q_' if quater else 'sc_')+('avg/' if do_avgpooling else 'fc/')+'last_layer.ckpt' 
-else:
+if (Mode=='train'):
+	learning_rate=0.001
+	variables_to_exclude=["f1","f2","beta2_power","beta1_power"]
+	checkpoint=checkpoint_dir+('FlowNet2/flownet-2.ckpt-0'if archi=='Flownet2' else 'FlowNetC/flownet-C.ckpt-0')
+if fine_tune:
+	learning_rate=0.000001
+	variables_to_exclude=["Adam_1"]
+	checkpoint=checkpoint_dir+'last_layer_flownetc_q_fclr_e_4_L2_/'+'last_layer.ckpt'
+	# checkpoint=checkpoint_dir+'last_layer_'+('flownet2_' if archi=='Flownet2' else 'flownetc_')+('q_' if quater else 'sc_')+('avg/' if do_avgpooling else 'fc/')+'last_layer.ckpt' 
+if (Mode=='test'):
 	variables_to_exclude=[]
 	# checkpoint=checkpoint_dir+'translation_flownetc_q_fc/'+'last_layer.ckpt'
 	# checkpoint=checkpoint_dir+'last_layer_flownetc_q_fconlyrotation/'+'last_layer.ckpt' 
-	checkpoint=checkpoint_dir+'last_layer_'+('flownet2_' if archi=='Flownet2' else 'flownetc_')+('q_' if quater else 'sc_')+('avg/' if do_avgpooling else 'fc/')+'last_layer.ckpt' 
+	# checkpoint=checkpoint_dir+'last_layer_'+('flownet2_' if archi=='Flownet2' else 'flownetc_')+('q_' if quater else 'sc_')+('avg/' if do_avgpooling else 'fc/')+'last_layer.ckpt' 
+	checkpoint=checkpoint_dir+'last_layer_flownetc_q_fclr_e_4_L2_/'+'last_layer.ckpt'
 
 
 def details():
@@ -138,7 +144,7 @@ def details():
 	sys.stdout.write('\n    %s     \n'%('with avg pooling last layer' if do_avgpooling else 'with fully connected last layer'))
 	sys.stdout.write('-'*30)
 	sys.stdout.write('\n    %s     \n'%('with quaternion as output' if quater else 'sincos terms as output'))
-	if Mode=='train':
+	if Mode=='train' or fine_tune:
 		sys.stdout.write('-'*30)
 		sys.stdout.write('\nwill save checkpoint to directory:    %s     \n'%(save_dir))
 		sys.stdout.write('-'*30)

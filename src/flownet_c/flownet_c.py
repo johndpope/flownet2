@@ -5,7 +5,7 @@ from ..downsample import downsample
 import math
 import tensorflow as tf
 slim = tf.contrib.slim
-
+from ..extras import print_shape
 
 class FlowNetC(Net):
 
@@ -37,7 +37,9 @@ class FlowNetC(Net):
                         conv_b_3 = slim.conv2d(pad(conv_b_2, 2), 256, 5, scope='conv3', reuse=True)
 
                         # Compute cross correlation with leaky relu activation
+                        print_shape(conv_a_1)
                         cc = correlation(conv_a_3, conv_b_3, 1, 20, 1, 2, 20)
+                        print_shape(cc)
                         cc_relu = LeakyReLU(cc)
 
                     # Combine cross correlation results with convolution of feature map A
